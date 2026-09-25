@@ -66,6 +66,38 @@ export function playLevelUp() {
   tone(1319, 0.45, 0.7, 'triangle', 0.15)
 }
 
+/** Fiery "whoosh" for XP flowing into the bar: a swept band of noise over a low rumble. */
+export function playWhoosh() {
+  const a = audio()
+  if (!a) return
+  const t = a.currentTime
+  const dur = 0.55
+
+  const buffer = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  const noise = a.createBufferSource()
+  noise.buffer = buffer
+
+  const band = a.createBiquadFilter()
+  band.type = 'bandpass'
+  band.Q.value = 1.2
+  band.frequency.setValueAtTime(300, t)
+  band.frequency.exponentialRampToValueAtTime(2400, t + 0.22)
+  band.frequency.exponentialRampToValueAtTime(500, t + dur)
+
+  const g = a.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(0.22, t + 0.12)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+
+  noise.connect(band).connect(g).connect(a.destination)
+  noise.start(t)
+  noise.stop(t + dur)
+
+  tone(90, 0, 0.4, 'sine', 0.12)
+}
+
 /** Sparkly arpeggio for a new badge. */
 export function playBadge() {
   ;[1175, 1397, 1760, 2093].forEach((f, i) => tone(f, i * 0.06, 0.25, 'sine', 0.1))

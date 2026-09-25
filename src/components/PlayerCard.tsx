@@ -1,8 +1,9 @@
 import { motion } from 'motion/react'
 import { Flame } from 'lucide-react'
 import type { Progress } from '../game/progress'
+import { SunFlameBar } from './SunFlameBar'
 
-export function PlayerCard({ name, progress }: { name: string; progress: Progress }) {
+export function PlayerCard({ name, progress, ready }: { name: string; progress: Progress; ready: boolean }) {
   const { level, dayStreak } = progress
   return (
     <section className="flex items-center gap-4 rounded-2xl border border-line bg-surface/80 p-4 backdrop-blur" aria-label="Player">
@@ -32,23 +33,9 @@ export function PlayerCard({ name, progress }: { name: string; progress: Progres
           </div>
         </div>
 
-        <div className="mt-2">
-          <div
-            className="h-3 overflow-hidden rounded-full bg-bg"
-            role="progressbar"
-            aria-label="XP to next level"
-            aria-valuemin={0}
-            aria-valuemax={level.xpForNextLevel}
-            aria-valuenow={level.xpIntoLevel}
-          >
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-xp to-amber-300 shadow-[0_0_12px] shadow-xp/60"
-              initial={false}
-              animate={{ width: `${Math.max(level.progress * 100, 2)}%` }}
-              transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-            />
-          </div>
-          <p className="mt-1 flex justify-between text-xs text-muted">
+        <div className="mt-6">
+          <SunFlameBar level={level} ready={ready} />
+          <p className="mt-4 flex justify-between text-xs text-muted">
             <span>
               <span className="font-semibold text-xp">{level.xpIntoLevel}</span> / {level.xpForNextLevel} XP
             </span>
