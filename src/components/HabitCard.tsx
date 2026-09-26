@@ -9,7 +9,7 @@ import type { Habit } from '../lib/types'
 
 const DIFF_STYLE = {
   easy: 'bg-done/15 text-done',
-  medium: 'bg-primary/20 text-primary-soft',
+  medium: 'bg-xp/15 text-xp',
   hard: 'bg-danger/15 text-danger',
 } as const
 
@@ -51,7 +51,7 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit }: Props) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -30 }}
       className={`group relative flex items-center gap-3 rounded-2xl border p-3 transition-colors sm:p-4 ${
-        done ? 'border-done/40 bg-done/[0.07]' : 'border-line bg-surface hover:border-faint'
+        done ? 'border-done/40 bg-done/[0.07]' : 'sun-panel border-line hover:border-primary-soft/50'
       }`}
     >
       <div className={`grid size-12 shrink-0 place-items-center rounded-xl text-2xl transition ${done ? 'bg-done/15' : 'bg-surface-2'}`} aria-hidden>

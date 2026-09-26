@@ -37,7 +37,7 @@ export function TodayView({ habits, progress, today, onError }: Props) {
 
   return (
     <div className="space-y-4">
-      <section className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
+      <section className="sun-panel flex items-center gap-4 rounded-2xl border border-line p-4">
         <ProgressRing value={todayDone} total={todayTotal} />
         <div className="min-w-0">
           <p className="text-sm text-muted">{formatDay(today, { weekday: 'long', day: 'numeric', month: 'long' })}</p>

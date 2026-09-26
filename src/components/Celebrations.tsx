@@ -99,7 +99,7 @@ export function LevelUpModal({ level, title, onClose }: { level: number | null; 
             <div className="relative">
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-xp">Level up!</p>
               <motion.div
-                className="mx-auto my-5 grid size-28 place-items-center rounded-3xl bg-gradient-to-br from-xp to-amber-600 text-5xl font-extrabold text-bg shadow-xl shadow-xp/40"
+                className="sun-badge mx-auto my-5 grid size-28 place-items-center rounded-full text-5xl font-extrabold text-sun-outline"
                 initial={{ rotate: -180, scale: 0 }}
                 animate={{ rotate: 0, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.15 }}
