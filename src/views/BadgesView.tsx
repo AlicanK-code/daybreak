@@ -15,7 +15,7 @@ export function BadgesView({ progress }: { progress: Progress }) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-line bg-surface p-4">
+      <section className="sun-panel rounded-2xl border border-line p-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-bold">Trophy cabinet</h2>
           <p className="text-sm text-muted">
@@ -51,7 +51,7 @@ export function BadgesView({ progress }: { progress: Progress }) {
               {!got && (
                 <div className="mt-2 w-full">
                   <div className="h-1.5 overflow-hidden rounded-full bg-bg">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${b.pct * 100}%` }} />
+                    <div className="h-full rounded-full bg-linear-to-r from-sun-crimson to-sun-blaze-orange" style={{ width: `${b.pct * 100}%` }} />
                   </div>
                   <p className="mt-1 text-[10px] tabular-nums text-faint">{Math.round(b.pct * 100)}%</p>
                 </div>

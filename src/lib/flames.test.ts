@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { STREAK_SHAPES, flameStreaks } from './flames'
+import { FLECK_SPRITES, STREAK_SHAPES, flameStreaks, risingFlecks } from './flames'
 
 describe('flameStreaks', () => {
   const full = flameStreaks(1)
@@ -61,5 +61,39 @@ describe('flameStreaks', () => {
 
   it('is deterministic, so streaks do not jump between renders', () => {
     expect(flameStreaks(0.42)).toEqual(flameStreaks(0.42))
+  })
+})
+
+describe('risingFlecks', () => {
+  const flecks = risingFlecks()
+
+  it('spreads fragments across the screen', () => {
+    const lefts = flecks.map((f) => f.left)
+    expect(Math.min(...lefts)).toBeLessThan(20)
+    expect(Math.max(...lefts)).toBeGreaterThan(80)
+  })
+
+  it('varies pixel size, drift, sprite and tone', () => {
+    const sizes = flecks.map((f) => f.size)
+    for (const s of sizes) {
+      expect(s).toBeGreaterThanOrEqual(4)
+      expect(s).toBeLessThanOrEqual(8)
+    }
+    expect(Math.max(...sizes) - Math.min(...sizes)).toBeGreaterThanOrEqual(3)
+    expect(new Set(flecks.map((f) => f.sprite)).size).toBe(FLECK_SPRITES)
+    expect(flecks.some((f) => f.drift < 0)).toBe(true)
+    expect(flecks.some((f) => f.drift > 0)).toBe(true)
+    expect(new Set(flecks.map((f) => f.tone))).toEqual(new Set([0, 1, 2]))
+  })
+
+  it('drifts slowly and is already under way on load', () => {
+    for (const f of flecks) {
+      expect(f.duration).toBeGreaterThanOrEqual(7)
+      expect(f.delay).toBeLessThanOrEqual(0)
+    }
+  })
+
+  it('is deterministic', () => {
+    expect(risingFlecks()).toEqual(risingFlecks())
   })
 })

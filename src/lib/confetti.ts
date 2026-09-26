@@ -2,7 +2,8 @@ import confetti from 'canvas-confetti'
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-const COLORS = ['#fbbf24', '#a78bfa', '#34d399', '#f472b6', '#60a5fa']
+// Fire palette: gold, amber, orange, flame red and white-hot sparks.
+const COLORS = ['#fbbf24', '#ffb347', '#ff7a1a', '#ff2a1f', '#fef3c7']
 
 /** Small burst from a point on screen (e.g. the button that was clicked). */
 export function burstFrom(el: Element | null, intensity = 1) {

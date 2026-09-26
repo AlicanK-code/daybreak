@@ -52,7 +52,7 @@ export function AuthScreen({ onDemo }: { onDemo: () => void }) {
         </ul>
       </motion.div>
 
-      <div className="rounded-2xl border border-line bg-surface/80 p-6 shadow-xl backdrop-blur">
+      <div className="sun-panel rounded-2xl border border-line p-6 shadow-xl">
         {supabase ? (
           <>
             <div className="mb-5 grid grid-cols-2 rounded-xl bg-bg p-1 text-sm font-semibold">

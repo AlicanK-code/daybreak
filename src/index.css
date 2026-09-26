@@ -3,19 +3,21 @@
 @theme {
   --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg: #0d0b1a;
-  --color-surface: #17142b;
-  --color-surface-2: #211d3a;
-  --color-line: #2e2950;
-  --color-ink: #ece9f7;
-  --color-muted: #9a93b8;
-  --color-faint: #6b6490;
+  /* Sun Breathing: warm near-black surfaces, ember lines, fire accents */
+  --color-bg: #1a0e12;
+  --color-surface: #28151b;
+  --color-surface-2: #361c24;
+  --color-line: #5c2a32;
+  --color-ink: #fff6f1;
+  --color-muted: #d6b4aa;
+  --color-faint: #a07d74;
 
-  --color-primary: #8b5cf6;
-  --color-primary-soft: #a78bfa;
-  --color-xp: #fbbf24;
-  --color-done: #34d399;
-  --color-streak: #fb923c;
+  /* Crimson keeps white button text readable (4.8:1); orange is the bright accent on dark. */
+  --color-primary: #dc2626;
+  --color-primary-soft: #ffa057;
+  --color-xp: #ffd23f;
+  --color-done: #4ae3a8;
+  --color-streak: #ffa057;
   --color-danger: #f87171;
 
   /* Sun Breathing XP bar */
@@ -87,10 +89,10 @@
 /* Player card: a dark ember panel with fire glowing up from its bottom edge and a heated rim on top. */
 .sun-card {
   background:
-    linear-gradient(90deg, transparent 10%, rgb(255 122 26 / 0.35) 50%, transparent 90%) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent 10%, rgb(255 140 50 / 0.55) 50%, transparent 90%) top / 100% 1px no-repeat,
     radial-gradient(ellipse 70% 60% at 50% 130%, rgb(220 38 38 / 0.28), transparent 70%),
     radial-gradient(ellipse 35% 80% at 0% 50%, rgb(255 122 26 / 0.12), transparent 70%),
-    linear-gradient(180deg, #1c0f14, #140b12);
+    linear-gradient(180deg, #2e161c, #221016);
   /* Faint glow just inside the border, plus the red glow beneath the card. */
   box-shadow:
     inset 0 0 8px rgb(255 90 31 / 0.12),
@@ -142,6 +144,52 @@
     0 0 18px rgb(255 122 26 / 0.55);
 }
 
+/* Other cards: the same ember panel and heated top rim as the player card, but calmer
+   (no pulsing glow), so the player card stays the centrepiece. */
+.sun-panel {
+  background:
+    linear-gradient(90deg, transparent 15%, rgb(255 140 50 / 0.32) 50%, transparent 85%) top / 100% 1px no-repeat,
+    linear-gradient(180deg, #2b161c, #211117);
+  box-shadow: 0 6px 24px -14px rgb(220 38 38 / 0.3);
+}
+
+/* Background fire: pixel fire along the bottom of the screen, with fragments drifting up out of it.
+   The layer is kept faint enough that content stays readable. */
+.bg-flames {
+  opacity: 0.35;
+}
+
+/* Pixel sprites climb in choppy steps, like the fire itself. */
+.bg-fleck {
+  animation: bg-fleck-rise 9s steps(90) infinite;
+  will-change: transform, opacity;
+}
+
+/* Sprites drift up most of the screen, wandering sideways, and burn out. */
+@keyframes bg-fleck-rise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(var(--drift, 0), -75vh);
+    opacity: 0;
+  }
+}
+
+/* A steady ember glow along the bottom edge that the flames rise out of. */
+.bg-flame-glow {
+  background:
+    radial-gradient(ellipse 70% 100% at 50% 100%, rgb(255 122 26 / 0.18), transparent 70%),
+    linear-gradient(0deg, rgb(220 38 38 / 0.14), transparent);
+}
+
 /* A blade trailing fire: dark embers at the hilt, burning to white-gold at the tip. */
 .sun-fill {
   background: linear-gradient(
@@ -171,8 +219,8 @@ html {
 body {
   @apply bg-bg text-ink font-sans antialiased;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(139 92 246 / 0.18), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgb(251 191 36 / 0.05), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(239 68 68 / 0.28), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgb(255 140 50 / 0.13), transparent);
   background-attachment: fixed;
   min-height: 100dvh;
 }

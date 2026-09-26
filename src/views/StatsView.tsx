@@ -12,8 +12,9 @@ interface Props {
   today: string
 }
 
-// Sequential single-hue ramp (violet), dark surface → bright. Step 0 = no activity.
-const HEAT = ['#211d3a', '#3d2f86', '#5b43c4', '#7c5cf0', '#b49dff']
+// Sequential ember ramp, dark surface → white-hot. Step 0 = no activity.
+// Step 0 follows the theme's raised surface so empty days stay visible on the card.
+const HEAT = ['var(--color-surface-2)', '#6b1a1a', '#b3261e', '#f0601a', '#ffb347']
 
 export function StatsView({ habits, completions, progress, today }: Props) {
   const daily = useMemo(() => dailyTotals(completions, 30, today), [completions, today])
@@ -33,18 +34,18 @@ export function StatsView({ habits, completions, progress, today }: Props) {
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={daily} margin={{ top: 8, right: 4, bottom: 0, left: -20 }} barCategoryGap={2}>
-              <CartesianGrid vertical={false} stroke="#2e2950" strokeDasharray="0" />
+              <CartesianGrid vertical={false} stroke="#3d1f25" strokeDasharray="0" />
               <XAxis
                 dataKey="day"
                 tickFormatter={(d: string) => formatDay(d)}
-                tick={{ fill: '#9a93b8', fontSize: 11 }}
+                tick={{ fill: '#b89a92', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 interval={6}
                 minTickGap={8}
               />
-              <YAxis tick={{ fill: '#9a93b8', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip cursor={{ fill: 'rgb(139 92 246 / 0.12)' }} content={<XpTooltip />} />
+              <YAxis tick={{ fill: '#b89a92', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip cursor={{ fill: 'rgb(255 122 26 / 0.12)' }} content={<XpTooltip />} />
               <Bar dataKey="xp" fill="#fbbf24" radius={[4, 4, 0, 0]} maxBarSize={18} />
             </BarChart>
           </ResponsiveContainer>
@@ -70,7 +71,7 @@ export function StatsView({ habits, completions, progress, today }: Props) {
                     <p className="truncate text-sm font-semibold">{h.title}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${rate * 100}%` }} />
+                        <div className="h-full rounded-full bg-linear-to-r from-sun-crimson to-sun-blaze-orange" style={{ width: `${rate * 100}%` }} />
                       </div>
                       <span className="w-9 text-right text-xs tabular-nums text-muted">{Math.round(rate * 100)}%</span>
                     </div>
@@ -91,7 +92,7 @@ export function StatsView({ habits, completions, progress, today }: Props) {
 
 function Stat({ label, value, accent = 'text-ink' }: { label: string; value: string; accent?: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-3.5">
+    <div className="sun-panel rounded-2xl border border-line p-3.5">
       <p className="text-xs font-medium text-muted">{label}</p>
       <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent}`}>{value}</p>
     </div>
@@ -100,7 +101,7 @@ function Stat({ label, value, accent = 'text-ink' }: { label: string; value: str
 
 function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface p-4">
+    <section className="sun-panel rounded-2xl border border-line p-4">
       <h2 className="font-bold">{title}</h2>
       {subtitle && <p className="mb-3 text-xs text-muted">{subtitle}</p>}
       {children}
