@@ -10,6 +10,8 @@ import type { Repo } from './repo'
  */
 
 const STORAGE_KEY = 'questlog-demo-v1'
+const NAME_KEY = 'questlog-demo-name'
+export const DEMO_DEFAULT_NAME = 'Demo Adventurer'
 
 interface DemoState {
   habits: Habit[]
@@ -44,8 +46,26 @@ export function resetDemo() {
   memory = null
   try {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(NAME_KEY)
   } catch {
     /* ignore */
+  }
+}
+
+/** The username chosen in demo mode, kept in this browser alongside the demo data. */
+export function readDemoName(): string {
+  try {
+    return localStorage.getItem(NAME_KEY) || DEMO_DEFAULT_NAME
+  } catch {
+    return DEMO_DEFAULT_NAME
+  }
+}
+
+export function writeDemoName(name: string) {
+  try {
+    localStorage.setItem(NAME_KEY, name)
+  } catch {
+    /* in-memory only: the name lasts until reload */
   }
 }
 

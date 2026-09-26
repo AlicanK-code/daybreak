@@ -1,9 +1,10 @@
 import type { Session as AuthSession } from '@supabase/supabase-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { createDemoRepo, resetDemo } from './data/demo'
+import { createDemoRepo, readDemoName, resetDemo, writeDemoName } from './data/demo'
 import { SessionContext, type Session } from './data/RepoContext'
 import { createSupabaseRepo, supabase } from './data/supabase'
+import { fallbackName } from './lib/username'
 import { AuthScreen } from './views/AuthScreen'
 import { Shell } from './views/Shell'
 
@@ -31,6 +32,7 @@ export default function App() {
   const [auth, setAuth] = useState<AuthSession | null>(null)
   const [authLoading, setAuthLoading] = useState(!!supabase)
   const [demo, setDemo] = useState(readDemoFlag)
+  const [demoName, setDemoName] = useState(readDemoName)
 
   useEffect(() => {
     if (!supabase) return
@@ -53,7 +55,12 @@ export default function App() {
       const client = supabase
       return {
         mode: 'supabase',
-        displayName: (auth.user.user_metadata?.display_name as string | undefined) ?? auth.user.email?.split('@')[0] ?? 'Adventurer',
+        displayName: (auth.user.user_metadata?.display_name as string | undefined) || fallbackName(auth.user.email),
+        // Stored on the account's profile; onAuthStateChange then delivers the updated user.
+        setDisplayName: async (name) => {
+          const { error } = await client.auth.updateUser({ data: { display_name: name } })
+          if (error) throw error
+        },
         repo: createSupabaseRepo(client),
         signOut: () => void client.auth.signOut(),
       }
@@ -61,18 +68,23 @@ export default function App() {
     if (demo) {
       return {
         mode: 'demo',
-        displayName: 'Demo Adventurer',
+        displayName: demoName,
+        setDisplayName: async (name) => {
+          writeDemoName(name)
+          setDemoName(name)
+        },
         repo: createDemoRepo(),
         signOut: () => {
           writeDemoFlag(false)
           resetDemo()
+          setDemoName(readDemoName())
           qc.clear()
           setDemo(false)
         },
       }
     }
     return null
-  }, [auth, demo, qc])
+  }, [auth, demo, demoName, qc])
 
   if (authLoading) {
     return (

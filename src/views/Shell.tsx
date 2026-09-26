@@ -3,7 +3,9 @@ import { motion } from 'motion/react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { LevelUpModal, Toasts, type Toast } from '../components/Celebrations'
 import { Logo } from '../components/Logo'
+import { Modal } from '../components/Modal'
 import { PlayerCard } from '../components/PlayerCard'
+import { UsernameForm } from '../components/UsernameForm'
 import { useCompletions, useHabits } from '../data/queries'
 import { useSession } from '../data/RepoContext'
 import { BADGES, unlockedBadgeIds } from '../game/badges'
@@ -35,6 +37,7 @@ export function Shell() {
   const [muted, setMutedState] = useState(isMuted)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [levelUp, setLevelUp] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState(false)
 
   const habits = useMemo(() => habitsQ.data ?? [], [habitsQ.data])
   const completions = useMemo(() => completionsQ.data ?? [], [completionsQ.data])
@@ -107,7 +110,17 @@ export function Shell() {
         </div>
       </header>
 
-      <PlayerCard name={session.displayName} progress={progress} ready={ready} />
+      <PlayerCard name={session.displayName} progress={progress} ready={ready} onEditName={() => setEditingName(true)} />
+
+      <Modal open={editingName} onClose={() => setEditingName(false)} title="Choose your username">
+        <UsernameForm
+          initial={session.displayName}
+          onSave={async (name) => {
+            await session.setDisplayName(name)
+            setEditingName(false)
+          }}
+        />
+      </Modal>
 
       <nav className="sticky top-0 z-30 mt-4 py-2" aria-label="Sections">
         <div className="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface/90 p-1 shadow-lg shadow-bg/50 backdrop-blur" role="tablist">
