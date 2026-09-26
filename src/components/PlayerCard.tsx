@@ -1,9 +1,16 @@
 import { motion } from 'motion/react'
-import { Flame } from 'lucide-react'
+import { Flame, Pencil } from 'lucide-react'
 import type { Progress } from '../game/progress'
 import { SunFlameBar } from './SunFlameBar'
 
-export function PlayerCard({ name, progress, ready }: { name: string; progress: Progress; ready: boolean }) {
+interface Props {
+  name: string
+  progress: Progress
+  ready: boolean
+  onEditName: () => void
+}
+
+export function PlayerCard({ name, progress, ready, onEditName }: Props) {
   const { level, dayStreak } = progress
   return (
     <section className="sun-card relative flex items-center gap-4 rounded-2xl border border-sun-crimson/50 p-4" aria-label="Player">
@@ -22,7 +29,16 @@ export function PlayerCard({ name, progress, ready }: { name: string; progress: 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate font-bold">{name}</p>
+            <button
+              type="button"
+              onClick={onEditName}
+              className="group flex max-w-full items-center gap-1.5 rounded-md text-left font-bold"
+              aria-label={`Change username (currently ${name})`}
+              title="Change username"
+            >
+              <span className="truncate">{name}</span>
+              <Pencil size={13} className="shrink-0 text-sun-ash/60 transition group-hover:text-sun-gold group-focus-visible:text-sun-gold" />
+            </button>
             <p className="text-sm font-medium text-sun-gold">{level.title}</p>
           </div>
           <div

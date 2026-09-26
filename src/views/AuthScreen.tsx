@@ -3,11 +3,13 @@ import { motion } from 'motion/react'
 import { Flame, Sparkles, Trophy } from 'lucide-react'
 import { supabase } from '../data/supabase'
 import { Logo } from '../components/Logo'
+import { USERNAME_MAX, cleanUsername, usernameError } from '../lib/username'
 
 export function AuthScreen({ onDemo }: { onDemo: () => void }) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -15,13 +17,21 @@ export function AuthScreen({ onDemo }: { onDemo: () => void }) {
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!supabase) return
+    // The username is optional at sign-up; without one the card shows the start of the email.
+    const name = mode === 'signup' && username.trim() ? cleanUsername(username) : null
+    const nameProblem = name === null ? null : usernameError(name)
+    if (nameProblem) return setError(nameProblem)
     setBusy(true)
     setError(null)
     setInfo(null)
     const { data, error } =
       mode === 'signin'
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: window.location.origin, data: name ? { display_name: name } : undefined },
+          })
     setBusy(false)
     if (error) setError(error.message)
     else if (mode === 'signup' && !data.session) setInfo('Check your inbox to confirm your email, then sign in.')
@@ -58,6 +68,21 @@ export function AuthScreen({ onDemo }: { onDemo: () => void }) {
               ))}
             </div>
             <form onSubmit={submit} className="space-y-3">
+              {mode === 'signup' && (
+                <label className="block">
+                  <span className="mb-1 block text-sm text-muted">
+                    Username <span className="text-faint">(optional)</span>
+                  </span>
+                  <input
+                    autoComplete="nickname"
+                    maxLength={USERNAME_MAX + 8}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="What should we call you?"
+                    className="w-full rounded-xl border border-line bg-bg px-3 py-2.5 outline-none focus:border-primary"
+                  />
+                </label>
+              )}
               <label className="block">
                 <span className="mb-1 block text-sm text-muted">Email</span>
                 <input
