@@ -6,6 +6,8 @@ export interface Habit {
   icon: string
   difficulty: Difficulty
   sortOrder: number
+  /** marked as important; shown with a Priority label */
+  priority: boolean
   archivedAt: string | null
   createdAt: string
 }
@@ -20,6 +22,6 @@ export interface Completion {
   completedAt: string
 }
 
-export type NewHabit = Pick<Habit, 'title' | 'icon' | 'difficulty'>
-export type HabitPatch = Partial<Pick<Habit, 'title' | 'icon' | 'difficulty' | 'sortOrder' | 'archivedAt'>>
+export type NewHabit = Pick<Habit, 'title' | 'icon' | 'difficulty' | 'priority'>
+export type HabitPatch = Partial<Pick<Habit, 'title' | 'icon' | 'difficulty' | 'priority' | 'sortOrder' | 'archivedAt'>>
 export type NewCompletion = Omit<Completion, 'id' | 'completedAt'>

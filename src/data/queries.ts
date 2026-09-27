@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { applyOrder } from '../lib/order'
 import type { Completion, Habit, HabitPatch, NewCompletion, NewHabit } from '../lib/types'
 import { useRepo } from './RepoContext'
 
@@ -32,6 +33,24 @@ export function useUpdateHabit() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: HabitPatch }) => repo.updateHabit(id, patch),
     onSuccess: (habit) => qc.setQueryData<Habit[]>(keys.habits, (old = []) => old.map((h) => (h.id === habit.id ? habit : h))),
+  })
+}
+
+/** Reordering is optimistic too: the list settles where it was dropped, and rolls back on error. */
+export function useReorderHabits() {
+  const repo = useRepo()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => repo.reorderHabits(ids),
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: keys.habits })
+      const previous = qc.getQueryData<Habit[]>(keys.habits)
+      qc.setQueryData<Habit[]>(keys.habits, (old = []) => applyOrder(old, ids))
+      return { previous }
+    },
+    onError: (_err, _ids, ctx) => {
+      if (ctx?.previous) qc.setQueryData(keys.habits, ctx.previous)
+    },
   })
 }
 

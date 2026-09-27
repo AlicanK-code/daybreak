@@ -24,7 +24,12 @@ function load(): DemoState {
   if (memory) return memory
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return (memory = JSON.parse(raw) as DemoState)
+    if (raw) {
+      const state = JSON.parse(raw) as DemoState
+      // Demo data saved before habits had a priority flag.
+      state.habits = state.habits.map((h) => ({ ...h, priority: h.priority ?? false }))
+      return (memory = state)
+    }
   } catch {
     /* storage unavailable — fall through to seed */
   }
@@ -88,17 +93,18 @@ function seed(): DemoState {
   const start = addDays(today, -HISTORY)
   const createdAt = `${start}T08:00:00`
   const defs: (NewHabit & { rate: number })[] = [
-    { title: 'Morning workout', icon: '🏋️', difficulty: 'hard', rate: 0.7 },
-    { title: 'Read 20 pages', icon: '📚', difficulty: 'medium', rate: 0.85 },
-    { title: 'Drink 2L of water', icon: '💧', difficulty: 'easy', rate: 0.9 },
-    { title: 'Code for 1 hour', icon: '💻', difficulty: 'hard', rate: 0.65 },
-    { title: 'Plan tomorrow', icon: '🗺️', difficulty: 'easy', rate: 0.75 },
+    { title: 'Morning workout', icon: '🏋️', difficulty: 'hard', priority: true, rate: 0.7 },
+    { title: 'Read 20 pages', icon: '📚', difficulty: 'medium', priority: false, rate: 0.85 },
+    { title: 'Drink 2L of water', icon: '💧', difficulty: 'easy', priority: false, rate: 0.9 },
+    { title: 'Code for 1 hour', icon: '💻', difficulty: 'hard', priority: true, rate: 0.65 },
+    { title: 'Plan tomorrow', icon: '🗺️', difficulty: 'easy', priority: false, rate: 0.75 },
   ]
   const habits: Habit[] = defs.map((d, i) => ({
     id: uid(),
     title: d.title,
     icon: d.icon,
     difficulty: d.difficulty,
+    priority: d.priority,
     sortOrder: i,
     archivedAt: null,
     createdAt,
@@ -141,6 +147,13 @@ export function createDemoRepo(): Repo {
       const habits = s.habits.map((h) => (h.id === id ? { ...h, ...patch } : h))
       save({ ...s, habits })
       return delay(habits.find((h) => h.id === id)!)
+    },
+
+    async reorderHabits(ids) {
+      const s = load()
+      const rank = new Map(ids.map((id, i) => [id, i]))
+      save({ ...s, habits: s.habits.map((h) => (rank.has(h.id) ? { ...h, sortOrder: rank.get(h.id)! } : h)) })
+      return delay(undefined)
     },
 
     async deleteHabit(id) {

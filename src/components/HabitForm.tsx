@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Archive, Trash2 } from 'lucide-react'
+import { Archive, Flag, Trash2 } from 'lucide-react'
 import { BASE_XP } from '../game/xp'
 import type { Difficulty, Habit, NewHabit } from '../lib/types'
 
@@ -23,12 +23,13 @@ export function HabitForm({ initial, busy, onSubmit, onArchive, onDelete }: Prop
   const [title, setTitle] = useState(initial?.title ?? '')
   const [icon, setIcon] = useState(initial?.icon ?? ICONS[0])
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
+  const [priority, setPriority] = useState(initial?.priority ?? false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function submit(e: FormEvent) {
     e.preventDefault()
     const t = title.trim()
-    if (t) onSubmit({ title: t, icon, difficulty })
+    if (t) onSubmit({ title: t, icon, difficulty, priority })
   }
 
   return (
@@ -83,6 +84,23 @@ export function HabitForm({ initial, busy, onSubmit, onArchive, onDelete }: Prop
         </div>
         <p className="mt-2 text-xs text-faint">Streaks boost XP by +5% per day, up to +50%.</p>
       </fieldset>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={priority}
+        onClick={() => setPriority((p) => !p)}
+        className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${priority ? 'border-sun-blaze-orange/60 bg-sun-crimson/15' : 'border-line hover:border-faint'}`}
+      >
+        <Flag size={18} className={priority ? 'fill-sun-blaze-orange/50 text-sun-blaze-orange' : 'text-muted'} />
+        <span className="flex-1">
+          <span className="block font-semibold">Priority</span>
+          <span className="block text-xs text-muted">Label this habit as important</span>
+        </span>
+        <span className={`relative h-6 w-10 rounded-full transition ${priority ? 'bg-sun-blaze-orange' : 'bg-surface-2'}`} aria-hidden>
+          <span className={`absolute top-0.5 size-5 rounded-full bg-ink shadow transition-all ${priority ? 'left-[18px]' : 'left-0.5'}`} />
+        </span>
+      </button>
 
       <button
         disabled={busy || !title.trim()}
