@@ -5,13 +5,8 @@ import type { HabitProgress } from '../game/progress'
 import { xpForCompletion } from '../game/xp'
 import { burstFrom } from '../lib/confetti'
 import { playComplete, playUndo } from '../lib/sound'
+import { DIFF_STYLE } from '../lib/difficulty'
 import type { Habit } from '../lib/types'
-
-const DIFF_STYLE = {
-  easy: 'bg-done/15 text-done',
-  medium: 'bg-xp/15 text-xp',
-  hard: 'bg-danger/15 text-danger',
-} as const
 
 interface Props {
   habit: Habit
