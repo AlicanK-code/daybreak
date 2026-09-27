@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { DayOverview } from '../components/DayOverview'
 import type { Progress } from '../game/progress'
 import { completionRate, dailyTotals } from '../game/stats'
 import { addDays, formatDay, weekday } from '../lib/dates'
@@ -52,8 +53,8 @@ export function StatsView({ habits, completions, progress, today }: Props) {
         </div>
       </Card>
 
-      <Card title="Activity" subtitle="Last 16 weeks — brighter = more habits done">
-        <Heatmap completions={completions} today={today} habitCount={Math.max(active.length, 1)} />
+      <Card title="Activity" subtitle="Last 16 weeks — brighter = more habits done. Tap a day for its overview.">
+        <Heatmap habits={habits} completions={completions} today={today} habitCount={Math.max(active.length, 1)} />
       </Card>
 
       <Card title="Habits" subtitle="Streaks and 30-day completion rate">
@@ -126,9 +127,17 @@ function XpTooltip({ active, payload }: TooltipProps) {
   )
 }
 
-function Heatmap({ completions, today, habitCount }: { completions: Completion[]; today: string; habitCount: number }) {
+interface HeatmapProps {
+  habits: Habit[]
+  completions: Completion[]
+  today: string
+  habitCount: number
+}
+
+function Heatmap({ habits, completions, today, habitCount }: HeatmapProps) {
   const WEEKS = 16
   const [hover, setHover] = useState<{ day: string; count: number } | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
 
   const { columns, counts } = useMemo(() => {
     const counts = new Map<string, number>()
@@ -151,15 +160,19 @@ function Heatmap({ completions, today, habitCount }: { completions: Completion[]
         {columns.map((week, w) => (
           <div key={w} className="grid flex-1 grid-rows-7 gap-1">
             {week.map((day) => {
-              const future = day > today
               const n = counts.get(day) ?? 0
+              if (day > today) return <div key={day} className="aspect-square" aria-hidden />
+              const label = `${formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' })}: ${n} habit${n === 1 ? '' : 's'} done`
               return (
-                <div
+                <button
                   key={day}
-                  onMouseEnter={() => !future && setHover({ day, count: n })}
-                  onClick={() => !future && setHover({ day, count: n })}
-                  title={future ? undefined : `${formatDay(day)}: ${n} habit${n === 1 ? '' : 's'}`}
-                  className={`aspect-square rounded-[3px] ${future ? 'opacity-0' : ''} ${day === today ? 'ring-1 ring-ink/60' : ''}`}
+                  type="button"
+                  onMouseEnter={() => setHover({ day, count: n })}
+                  onFocus={() => setHover({ day, count: n })}
+                  onClick={() => setSelected(day)}
+                  title={label}
+                  aria-label={`${label}. Open daily overview`}
+                  className={`aspect-square cursor-pointer rounded-[3px] transition hover:ring-1 hover:ring-primary-soft ${day === today ? 'ring-1 ring-ink/60' : ''}`}
                   style={{ backgroundColor: HEAT[level(n)] }}
                 />
               )
@@ -169,7 +182,7 @@ function Heatmap({ completions, today, habitCount }: { completions: Completion[]
       </div>
       <div className="mt-3 flex items-center justify-between text-xs text-muted">
         <span aria-live="polite">
-          {hover ? `${formatDay(hover.day, { weekday: 'short', day: 'numeric', month: 'short' })} · ${hover.count} habit${hover.count === 1 ? '' : 's'}` : 'Hover a day for details'}
+          {hover ? `${formatDay(hover.day, { weekday: 'short', day: 'numeric', month: 'short' })} · ${hover.count} habit${hover.count === 1 ? '' : 's'}` : 'Tap a day for its overview'}
         </span>
         <span className="flex items-center gap-1">
           Less
@@ -179,6 +192,7 @@ function Heatmap({ completions, today, habitCount }: { completions: Completion[]
           More
         </span>
       </div>
+      <DayOverview day={selected} today={today} habits={habits} completions={completions} onClose={() => setSelected(null)} />
     </div>
   )
 }

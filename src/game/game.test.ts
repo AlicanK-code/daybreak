@@ -3,7 +3,7 @@ import { addDays, dayDiff, lastNDays, weekday } from '../lib/dates'
 import type { Completion, Habit } from '../lib/types'
 import { BADGES, unlockedBadgeIds } from './badges'
 import { computeProgress } from './progress'
-import { completionRate, dailyTotals } from './stats'
+import { completionRate, dailyTotals, dayOverview } from './stats'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
 import { levelInfo, xpForCompletion, xpToReachLevel } from './xp'
 
@@ -149,5 +149,58 @@ describe('stats', () => {
   it('only counts days since the habit was created', () => {
     const h = habit('a', { createdAt: '2026-09-23T10:00:00' })
     expect(completionRate(h, [done('a', TODAY)], 30, TODAY)).toBe(0.5)
+  })
+})
+
+describe('dayOverview', () => {
+  const DAY = '2026-09-20'
+
+  it('splits the day into done and missed habits, in list order', () => {
+    const habits = [habit('b', { sortOrder: 1 }), habit('a', { sortOrder: 0 }), habit('c', { sortOrder: 2 })]
+    const o = dayOverview(habits, [done('b', DAY, 35)], DAY)
+    expect(o.done.map((d) => d.habit.id)).toEqual(['b'])
+    expect(o.missed.map((h) => h.id)).toEqual(['a', 'c'])
+    expect(o.total).toBe(3)
+    expect(o.xp).toBe(35)
+    expect(o.perfect).toBe(false)
+  })
+
+  it('lists completions in the order they were ticked off', () => {
+    const habits = [habit('a', { sortOrder: 0 }), habit('b', { sortOrder: 1 })]
+    const o = dayOverview(habits, [done('a', DAY, 20, '21:00:00'), done('b', DAY, 20, '07:30:00')], DAY)
+    expect(o.done.map((d) => d.habit.id)).toEqual(['b', 'a'])
+  })
+
+  it('only counts completions from that day', () => {
+    const o = dayOverview([habit('a')], [done('a', addDays(DAY, -1)), done('a', addDays(DAY, 1))], DAY)
+    expect(o.done).toHaveLength(0)
+    expect(o.missed.map((h) => h.id)).toEqual(['a'])
+    expect(o.xp).toBe(0)
+  })
+
+  it("doesn't count a habit as missed before it was created", () => {
+    const habits = [habit('a'), habit('new', { createdAt: `${addDays(DAY, 1)}T08:00:00` })]
+    expect(dayOverview(habits, [], DAY).missed.map((h) => h.id)).toEqual(['a'])
+    // It does count from its first day.
+    expect(dayOverview(habits, [], addDays(DAY, 1)).missed.map((h) => h.id)).toEqual(['a', 'new'])
+  })
+
+  it("doesn't count a habit as missed from the day it was archived", () => {
+    const habits = [habit('a'), habit('old', { archivedAt: `${DAY}T10:00:00` })]
+    expect(dayOverview(habits, [], DAY).missed.map((h) => h.id)).toEqual(['a'])
+    expect(dayOverview(habits, [], addDays(DAY, -1)).missed.map((h) => h.id)).toEqual(['a', 'old'])
+  })
+
+  it('keeps a completion even if the habit was archived or created later', () => {
+    const habits = [habit('old', { archivedAt: `${addDays(DAY, -5)}T10:00:00`, createdAt: `${addDays(DAY, 2)}T08:00:00` })]
+    const o = dayOverview(habits, [done('old', DAY, 15)], DAY)
+    expect(o.done.map((d) => d.habit.id)).toEqual(['old'])
+    expect(o.perfect).toBe(true)
+  })
+
+  it('calls a day perfect only when every habit that counted was done', () => {
+    const habits = [habit('a'), habit('b')]
+    expect(dayOverview(habits, [done('a', DAY), done('b', DAY)], DAY).perfect).toBe(true)
+    expect(dayOverview([], [], DAY)).toMatchObject({ total: 0, perfect: false })
   })
 })
