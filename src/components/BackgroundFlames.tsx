@@ -99,9 +99,11 @@ function PixelFire({ animate }: { animate: boolean }) {
       paintFire(fire, image.data)
       ctx.putImageData(image, 0, 0)
     }
-    // One column per cell across the screen; rebuilt when the window is resized.
+    // One column per cell across the screen; rebuilt when the window is resized. At least one
+    // column: a window can report zero width (e.g. loading in the background), and a zero-width
+    // canvas would throw and take the app down with it.
     const build = () => {
-      const cols = Math.ceil(window.innerWidth / CELL)
+      const cols = Math.max(1, Math.ceil(window.innerWidth / CELL))
       canvas.width = cols
       canvas.height = ROWS
       canvas.style.width = `${cols * CELL}px`
