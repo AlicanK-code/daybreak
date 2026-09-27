@@ -16,6 +16,7 @@ interface HabitRow {
   icon: string
   difficulty: Habit['difficulty']
   sort_order: number
+  priority: boolean
   archived_at: string | null
   created_at: string
 }
@@ -34,6 +35,7 @@ const toHabit = (r: HabitRow): Habit => ({
   icon: r.icon,
   difficulty: r.difficulty,
   sortOrder: r.sort_order,
+  priority: r.priority,
   archivedAt: r.archived_at,
   createdAt: r.created_at,
 })
@@ -52,11 +54,12 @@ function patchToRow(p: HabitPatch): Partial<HabitRow> {
   if (p.icon !== undefined) row.icon = p.icon
   if (p.difficulty !== undefined) row.difficulty = p.difficulty
   if (p.sortOrder !== undefined) row.sort_order = p.sortOrder
+  if (p.priority !== undefined) row.priority = p.priority
   if (p.archivedAt !== undefined) row.archived_at = p.archivedAt
   return row
 }
 
-const HABIT_COLS = 'id,title,icon,difficulty,sort_order,archived_at,created_at'
+const HABIT_COLS = 'id,title,icon,difficulty,sort_order,priority,archived_at,created_at'
 const COMPLETION_COLS = 'id,habit_id,completed_on,xp_earned,completed_at'
 const PAGE = 1000 // PostgREST's default max rows per request
 
@@ -71,7 +74,13 @@ export function createSupabaseRepo(client: SupabaseClient): Repo {
     async createHabit(input: NewHabit) {
       const { data, error } = await client
         .from('habits')
-        .insert({ title: input.title, icon: input.icon, difficulty: input.difficulty, sort_order: Date.now() % 1_000_000_000 })
+        .insert({
+          title: input.title,
+          icon: input.icon,
+          difficulty: input.difficulty,
+          priority: input.priority,
+          sort_order: Date.now() % 1_000_000_000,
+        })
         .select(HABIT_COLS)
         .single()
       if (error) throw error
@@ -87,6 +96,13 @@ export function createSupabaseRepo(client: SupabaseClient): Repo {
     async deleteHabit(id) {
       const { error } = await client.from('habits').delete().eq('id', id)
       if (error) throw error
+    },
+
+    async reorderHabits(ids) {
+      // One small update per habit; a user has a handful of habits, and RLS keeps each to its owner.
+      const results = await Promise.all(ids.map((id, i) => client.from('habits').update({ sort_order: i }).eq('id', id)))
+      const failed = results.find((r) => r.error)
+      if (failed?.error) throw failed.error
     },
 
     async listCompletions() {

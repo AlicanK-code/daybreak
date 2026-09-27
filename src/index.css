@@ -190,6 +190,13 @@
     linear-gradient(0deg, rgb(220 38 38 / 0.14), transparent);
 }
 
+/* Priority habits: a glowing ember accent along the card's left edge. */
+.priority-edge {
+  box-shadow:
+    inset 3px 0 0 var(--color-sun-blaze-orange),
+    -2px 0 10px -4px rgb(255 122 26 / 0.6);
+}
+
 /* A blade trailing fire: dark embers at the hilt, burning to white-gold at the tip. */
 .sun-fill {
   background: linear-gradient(

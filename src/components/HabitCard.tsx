@@ -1,5 +1,5 @@
-import { AnimatePresence, motion } from 'motion/react'
-import { Check, Flame, Pencil } from 'lucide-react'
+import { AnimatePresence, Reorder, motion, useDragControls } from 'motion/react'
+import { Check, Flag, Flame, GripVertical, Pencil } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { HabitProgress } from '../game/progress'
 import { xpForCompletion } from '../game/xp'
@@ -14,9 +14,14 @@ interface Props {
   onComplete: (xp: number) => void
   onUndo: () => void
   onEdit: () => void
+  /** move one place up (-1) or down (+1), from the keyboard */
+  onMove: (dir: -1 | 1) => void
+  /** a drag has finished, so the new order should be saved */
+  onDragEnd: () => void
 }
 
-export function HabitCard({ habit, hp, onComplete, onUndo, onEdit }: Props) {
+export function HabitCard({ habit, hp, onComplete, onUndo, onEdit, onMove, onDragEnd }: Props) {
+  const drag = useDragControls()
   const btn = useRef<HTMLButtonElement>(null)
   const [floats, setFloats] = useState<{ id: number; xp: number }[]>([])
   const xp = xpForCompletion(habit.difficulty, hp.streakBeforeToday)
@@ -40,15 +45,35 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit }: Props) {
   }
 
   return (
-    <motion.li
-      layout
+    <Reorder.Item
+      value={habit.id}
+      dragListener={false}
+      dragControls={drag}
+      onDragEnd={onDragEnd}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -30 }}
-      className={`group relative flex items-center gap-3 rounded-2xl border p-3 transition-colors sm:p-4 ${
+      whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px -8px rgb(0 0 0 / 0.6)', zIndex: 10 }}
+      className={`group relative flex items-center gap-2 rounded-2xl border p-3 pl-1.5 transition-colors sm:gap-3 sm:p-4 sm:pl-2 ${
         done ? 'border-done/40 bg-done/[0.07]' : 'sun-panel border-line hover:border-primary-soft/50'
-      }`}
+      } ${habit.priority ? 'priority-edge' : ''}`}
     >
+      {/* Drag to reorder (mouse or touch), or focus and use the arrow keys. */}
+      <button
+        type="button"
+        onPointerDown={(e) => drag.start(e)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault()
+            onMove(e.key === 'ArrowUp' ? -1 : 1)
+          }
+        }}
+        aria-label={`Reorder ${habit.title}. Drag, or use the up and down arrow keys`}
+        className="shrink-0 cursor-grab touch-none rounded-md p-1 text-faint transition hover:text-ink active:cursor-grabbing"
+      >
+        <GripVertical size={18} />
+      </button>
+
       <div className={`grid size-12 shrink-0 place-items-center rounded-xl text-2xl transition ${done ? 'bg-done/15' : 'bg-surface-2'}`} aria-hidden>
         {habit.icon}
       </div>
@@ -65,6 +90,11 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit }: Props) {
           </button>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+          {habit.priority && (
+            <span className="flex items-center gap-1 rounded-full border border-sun-blaze-orange/50 bg-sun-crimson/15 px-2 py-0.5 font-semibold text-sun-blaze-orange">
+              <Flag size={11} className="fill-sun-blaze-orange/50" /> Priority
+            </span>
+          )}
           <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${DIFF_STYLE[habit.difficulty]}`}>{habit.difficulty}</span>
           <span className={`flex items-center gap-0.5 font-semibold ${hp.currentStreak > 0 ? 'text-streak' : 'text-faint'}`} title="Current streak">
             <Flame size={13} className={hp.currentStreak > 0 ? 'fill-streak/40' : ''} />
@@ -126,6 +156,6 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit }: Props) {
           </motion.span>
         ))}
       </AnimatePresence>
-    </motion.li>
+    </Reorder.Item>
   )
 }

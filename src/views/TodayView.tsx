@@ -1,12 +1,13 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, Reorder, motion } from 'motion/react'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { HabitCard } from '../components/HabitCard'
 import { HabitForm } from '../components/HabitForm'
 import { Modal } from '../components/Modal'
-import { useCreateHabit, useDeleteHabit, useToggleCompletion, useUpdateHabit } from '../data/queries'
+import { useCreateHabit, useDeleteHabit, useReorderHabits, useToggleCompletion, useUpdateHabit } from '../data/queries'
 import type { Progress } from '../game/progress'
 import { formatDay } from '../lib/dates'
+import { moveItem } from '../lib/order'
 import type { Habit } from '../lib/types'
 
 interface Props {
@@ -27,8 +28,20 @@ export function TodayView({ habits, progress, today, onError }: Props) {
   const create = useCreateHabit()
   const update = useUpdateHabit()
   const remove = useDeleteHabit()
+  const reorder = useReorderHabits()
+  // While a habit is being dragged, the list follows this local order; it's saved on drop.
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null)
 
   const active = habits.filter((h) => !h.archivedAt)
+  const byId = new Map(active.map((h) => [h.id, h]))
+  const ids = dragOrder ?? active.map((h) => h.id)
+  const saveOrder = (next: string[], onSettled?: () => void) =>
+    reorder.mutate(next, { onError: fail("Couldn't save the new order"), onSettled })
+  // Keep showing the dropped order until the save settles, so the list doesn't flick back first.
+  const commitDrag = () => {
+    if (dragOrder && dragOrder.join() !== active.map((h) => h.id).join()) saveOrder(dragOrder, () => setDragOrder(null))
+    else setDragOrder(null)
+  }
   const { todayDone, todayTotal } = progress
   const allDone = todayTotal > 0 && todayDone === todayTotal
 
@@ -56,14 +69,16 @@ export function TodayView({ habits, progress, today, onError }: Props) {
       </section>
 
       {active.length > 0 && (
-        <ul className="space-y-2.5">
+        <Reorder.Group axis="y" values={ids} onReorder={setDragOrder} className="space-y-2.5">
           <AnimatePresence initial={false}>
-            {active.map((h) => (
+            {ids.map((id) => byId.get(id)).filter((h) => h !== undefined).map((h, i, list) => (
               <HabitCard
                 key={h.id}
                 habit={h}
                 hp={progress.habits.get(h.id)!}
                 onEdit={() => setEditing(h)}
+                onMove={(dir) => saveOrder(moveItem(list.map((x) => x.id), i, i + dir))}
+                onDragEnd={commitDrag}
                 onComplete={(xp) =>
                   toggle.mutate(
                     { type: 'add', input: { habitId: h.id, completedOn: today, xpEarned: xp } },
@@ -74,7 +89,7 @@ export function TodayView({ habits, progress, today, onError }: Props) {
               />
             ))}
           </AnimatePresence>
-        </ul>
+        </Reorder.Group>
       )}
 
       <motion.button

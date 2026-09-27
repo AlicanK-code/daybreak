@@ -10,6 +10,8 @@ export interface Repo {
   createHabit(input: NewHabit): Promise<Habit>
   updateHabit(id: string, patch: HabitPatch): Promise<Habit>
   deleteHabit(id: string): Promise<void>
+  /** Saves a new manual order: the listed habits get sortOrder 0, 1, 2… in that order. */
+  reorderHabits(ids: string[]): Promise<void>
   listCompletions(): Promise<Completion[]>
   addCompletion(input: NewCompletion): Promise<Completion>
   removeCompletion(habitId: string, day: string): Promise<void>
