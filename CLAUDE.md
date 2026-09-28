@@ -63,4 +63,4 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 3. Daily bonus quests ("complete 3 hard habits before noon")
 4. Coins and a personal reward shop
 5. PWA (installable) and reminder notifications
-6. Drag-to-reorder habits (`sort_order` already exists)
+6. ~~Drag-to-reorder habits~~ (done in 0.6.0)

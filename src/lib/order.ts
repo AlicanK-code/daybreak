@@ -1,4 +1,6 @@
-/** Helpers for the manual order of habits (their sortOrder). */
+/** Helpers for the order habits are listed in. */
+
+import type { Difficulty } from './types'
 
 /** Returns a copy of `items` with the item at `from` moved to `to`. Out-of-range moves are clamped. */
 export function moveItem<T>(items: readonly T[], from: number, to: number): T[] {
@@ -19,4 +21,32 @@ export function applyOrder<T extends { id: string; sortOrder: number }>(items: r
   const listed = items.filter((it) => rank.has(it.id)).map((it) => ({ ...it, sortOrder: rank.get(it.id)! }))
   const rest = items.filter((it) => !rank.has(it.id))
   return [...listed.sort((a, b) => a.sortOrder - b.sortOrder), ...rest]
+}
+
+type Orderable = { id: string; title: string; difficulty: Difficulty; priority: boolean; sortOrder: number }
+
+const DIFFICULTY_RANK: Record<Difficulty, number> = { hard: 0, medium: 1, easy: 2 }
+// Case-insensitive and number-aware, so "habit 2" comes before "Habit 10".
+const byTitle = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
+
+/**
+ * The order habits are listed in: priority habits first, hardest first and then A–Z by title;
+ * then everything else in the player's own drag-and-drop order. Habits in `done` (finished today)
+ * sink below the unfinished ones, keeping the same order among themselves.
+ */
+export function orderHabits<T extends Orderable>(habits: readonly T[], done: ReadonlySet<string> = new Set()): T[] {
+  const todo = habits.filter((h) => !done.has(h.id))
+  const finished = habits.filter((h) => done.has(h.id))
+  return [...byPriorityThenOwnOrder(todo), ...byPriorityThenOwnOrder(finished)]
+}
+
+function byPriorityThenOwnOrder<T extends Orderable>(habits: readonly T[]): T[] {
+  const priority = habits
+    .filter((h) => h.priority)
+    .sort(
+      (a, b) =>
+        DIFFICULTY_RANK[a.difficulty] - DIFFICULTY_RANK[b.difficulty] || byTitle.compare(a.title, b.title) || a.id.localeCompare(b.id),
+    )
+  const rest = habits.filter((h) => !h.priority).sort((a, b) => a.sortOrder - b.sortOrder)
+  return [...priority, ...rest]
 }
