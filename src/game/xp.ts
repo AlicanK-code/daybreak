@@ -45,6 +45,9 @@ const TITLES: [number, string][] = [
   [30, 'Mythic'],
 ]
 
+/** Levels at which a new rank title begins, lowest first. */
+export const RANK_LEVELS: readonly number[] = TITLES.map(([min]) => min)
+
 export function titleForLevel(level: number): string {
   let title = TITLES[0][1]
   for (const [min, t] of TITLES) if (level >= min) title = t

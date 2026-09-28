@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { Flame, Pencil } from 'lucide-react'
 import type { Progress } from '../game/progress'
+import { LevelBadge } from './LevelFlame'
+import { LevelFlames } from './LevelFlames'
 import { SunFlameBar } from './SunFlameBar'
 
 interface Props {
@@ -12,19 +15,27 @@ interface Props {
 
 export function PlayerCard({ name, progress, ready, onEditName }: Props) {
   const { level, dayStreak } = progress
+  const [showLevels, setShowLevels] = useState(false)
   return (
     <section className="sun-card relative flex items-center gap-4 rounded-2xl border border-sun-crimson/50 p-4" aria-label="Player">
-      {/* Level badge: a sun disc, like the flame ball at the tip of the XP bar */}
-      <motion.div
+      {/* Level badge: a flame that grows and gets fiercer with each level; it pops on level-up.
+          Tapping it shows every flame stage. */}
+      <motion.button
+        type="button"
         key={level.level}
+        onClick={() => setShowLevels(true)}
+        aria-label={`Level ${level.level}. View all level flames`}
+        title="View level flames"
         initial={{ scale: 0.6, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
         transition={{ type: 'spring', stiffness: 300, damping: 14 }}
-        className="sun-badge relative grid size-16 shrink-0 place-items-center rounded-full"
+        className="shrink-0 origin-bottom cursor-pointer rounded-xl"
       >
-        <span className="absolute top-2.5 text-[9px] font-bold uppercase tracking-widest text-sun-outline/80">Lvl</span>
-        <span className="mt-2 text-2xl font-extrabold text-sun-outline">{level.level}</span>
-      </motion.div>
+        <LevelBadge level={level.level} />
+      </motion.button>
+      <LevelFlames open={showLevels} level={level.level} onClose={() => setShowLevels(false)} />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
