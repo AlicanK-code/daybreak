@@ -11,6 +11,21 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **Priority habits come first** on the Today list, hardest first (hard, then medium, then easy),
+  and alphabetically when they share a difficulty. The rest of your habits follow in your own
+  order.
+
+### UI & design
+
+- Priority habits show a flag in place of the drag handle, since they're placed automatically;
+  drag-to-reorder (and the arrow keys) now arranges your other habits.
+- **Finished habits move to the bottom** of the Today list, gliding down when you tick them off
+  and back up if you undo them.
+- Cards on the Today, Stats and Trophies screens are now **frosted and see-through**, like the tab
+  bar, so the fire glows softly behind them.
+
 ## [0.7.0] - 2026-09-28
 
 ### Features

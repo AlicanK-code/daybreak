@@ -55,24 +55,35 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit, onMove, onDra
       exit={{ opacity: 0, x: -30 }}
       whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px -8px rgb(0 0 0 / 0.6)', zIndex: 10 }}
       className={`group relative flex items-center gap-2 rounded-2xl border p-3 pl-1.5 transition-colors sm:gap-3 sm:p-4 sm:pl-2 ${
-        done ? 'border-done/40 bg-done/[0.07]' : 'sun-panel border-line hover:border-primary-soft/50'
+        done ? 'sun-panel-done border-done/40' : 'sun-panel border-line hover:border-primary-soft/50'
       } ${habit.priority ? 'priority-edge' : ''}`}
     >
-      {/* Drag to reorder (mouse or touch), or focus and use the arrow keys. */}
-      <button
-        type="button"
-        onPointerDown={(e) => drag.start(e)}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            e.preventDefault()
-            onMove(e.key === 'ArrowUp' ? -1 : 1)
-          }
-        }}
-        aria-label={`Reorder ${habit.title}. Drag, or use the up and down arrow keys`}
-        className="shrink-0 cursor-grab touch-none rounded-md p-1 text-faint transition hover:text-ink active:cursor-grabbing"
-      >
-        <GripVertical size={18} />
-      </button>
+      {/* Drag to reorder (mouse or touch), or focus and use the arrow keys. Priority habits are
+          placed automatically, so they show a flag instead of a handle. */}
+      {habit.priority ? (
+        <span
+          className="grid shrink-0 place-items-center p-1 text-sun-blaze-orange/80"
+          title="Priority habits are listed first automatically: hardest first, then A–Z"
+        >
+          <Flag size={16} className="fill-sun-blaze-orange/40" aria-hidden />
+          <span className="sr-only">Priority habit, ordered automatically</span>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onPointerDown={(e) => drag.start(e)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault()
+              onMove(e.key === 'ArrowUp' ? -1 : 1)
+            }
+          }}
+          aria-label={`Reorder ${habit.title}. Drag, or use the up and down arrow keys`}
+          className="shrink-0 cursor-grab touch-none rounded-md p-1 text-faint transition hover:text-ink active:cursor-grabbing"
+        >
+          <GripVertical size={18} />
+        </button>
+      )}
 
       <div className={`grid size-12 shrink-0 place-items-center rounded-xl text-2xl transition ${done ? 'bg-done/15' : 'bg-surface-2'}`} aria-hidden>
         {habit.icon}

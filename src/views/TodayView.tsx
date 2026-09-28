@@ -7,7 +7,7 @@ import { Modal } from '../components/Modal'
 import { useCreateHabit, useDeleteHabit, useReorderHabits, useToggleCompletion, useUpdateHabit } from '../data/queries'
 import type { Progress } from '../game/progress'
 import { formatDay } from '../lib/dates'
-import { moveItem } from '../lib/order'
+import { moveItem, orderHabits } from '../lib/order'
 import type { Habit } from '../lib/types'
 
 interface Props {
@@ -32,14 +32,24 @@ export function TodayView({ habits, progress, today, onError }: Props) {
   // While a habit is being dragged, the list follows this local order; it's saved on drop.
   const [dragOrder, setDragOrder] = useState<string[] | null>(null)
 
-  const active = habits.filter((h) => !h.archivedAt)
+  // Unfinished habits first, finished ones below. Within each, priority habits come first in a fixed
+  // order (hardest first, then A–Z) and the rest follow the player's own drag-and-drop order, which
+  // is the only part that can be rearranged.
+  const doneToday = new Set([...progress.habits].filter(([, hp]) => hp.doneToday).map(([id]) => id))
+  const active = orderHabits(
+    habits.filter((h) => !h.archivedAt),
+    doneToday,
+  )
   const byId = new Map(active.map((h) => [h.id, h]))
+  const movable = active.filter((h) => !h.priority).map((h) => h.id)
   const ids = dragOrder ?? active.map((h) => h.id)
   const saveOrder = (next: string[], onSettled?: () => void) =>
     reorder.mutate(next, { onError: fail("Couldn't save the new order"), onSettled })
-  // Keep showing the dropped order until the save settles, so the list doesn't flick back first.
+  // Save only the non-priority order (priority habits snap back to their place), and keep showing
+  // the dropped order until the save settles, so the list doesn't flick back first.
   const commitDrag = () => {
-    if (dragOrder && dragOrder.join() !== active.map((h) => h.id).join()) saveOrder(dragOrder, () => setDragOrder(null))
+    const next = dragOrder?.filter((id) => !byId.get(id)?.priority)
+    if (next && next.join() !== movable.join()) saveOrder(next, () => setDragOrder(null))
     else setDragOrder(null)
   }
   const { todayDone, todayTotal } = progress
@@ -71,13 +81,22 @@ export function TodayView({ habits, progress, today, onError }: Props) {
       {active.length > 0 && (
         <Reorder.Group axis="y" values={ids} onReorder={setDragOrder} className="space-y-2.5">
           <AnimatePresence initial={false}>
-            {ids.map((id) => byId.get(id)).filter((h) => h !== undefined).map((h, i, list) => (
+            {ids.map((id) => byId.get(id)).filter((h) => h !== undefined).map((h) => (
               <HabitCard
                 key={h.id}
                 habit={h}
                 hp={progress.habits.get(h.id)!}
                 onEdit={() => setEditing(h)}
-                onMove={(dir) => saveOrder(moveItem(list.map((x) => x.id), i, i + dir))}
+                onMove={(dir) => {
+                  // Move within its own group (unfinished or finished), keeping the other group as is.
+                  const finished = doneToday.has(h.id)
+                  const group = movable.filter((id) => doneToday.has(id) === finished)
+                  const other = movable.filter((id) => doneToday.has(id) !== finished)
+                  const i = group.indexOf(h.id)
+                  if (i === -1) return
+                  const moved = moveItem(group, i, i + dir)
+                  saveOrder(finished ? [...other, ...moved] : [...moved, ...other])
+                }}
                 onDragEnd={commitDrag}
                 onComplete={(xp) =>
                   toggle.mutate(

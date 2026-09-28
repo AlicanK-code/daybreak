@@ -37,7 +37,7 @@ export function BadgesView({ progress }: { progress: Progress }) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.03 }}
-              className={`flex flex-col items-center rounded-2xl border p-4 text-center ${got ? 'border-line bg-surface' : 'border-line/60 bg-surface/50'}`}
+              className={`flex flex-col items-center rounded-2xl border p-4 text-center ${got ? 'sun-panel border-line' : 'sun-panel-faint border-line/60'}`}
             >
               <div
                 className={`relative mb-2 grid size-16 place-items-center rounded-full text-3xl ring-2 ${got ? `bg-surface-2 ${tier.ring}` : 'bg-bg ring-line grayscale'}`}

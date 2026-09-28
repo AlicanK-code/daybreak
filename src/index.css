@@ -147,10 +147,26 @@
 /* Other cards: the same ember panel and heated top rim as the player card, but calmer
    (no pulsing glow), so the player card stays the centrepiece. */
 .sun-panel {
+  /* Frosted and see-through, like the tab bar, so the fire glows softly through. */
   background:
     linear-gradient(90deg, transparent 15%, rgb(255 140 50 / 0.32) 50%, transparent 85%) top / 100% 1px no-repeat,
-    linear-gradient(180deg, #2b161c, #211117);
+    linear-gradient(180deg, rgb(43 22 28 / 0.72), rgb(33 17 23 / 0.72));
+  backdrop-filter: blur(8px) saturate(1.2);
   box-shadow: 0 6px 24px -14px rgb(220 38 38 / 0.3);
+}
+
+/* A fainter frosted panel for things not yet earned, such as locked trophies. */
+.sun-panel-faint {
+  background: rgb(33 17 23 / 0.45);
+  backdrop-filter: blur(8px);
+}
+
+/* Finished habits: the frosted panel with a soft green tint on top. */
+.sun-panel-done {
+  background:
+    linear-gradient(rgb(74 227 168 / 0.08), rgb(74 227 168 / 0.08)),
+    linear-gradient(180deg, rgb(43 22 28 / 0.72), rgb(33 17 23 / 0.72));
+  backdrop-filter: blur(8px) saturate(1.2);
 }
 
 /* Background fire: pixel fire along the bottom of the screen, with fragments drifting up out of it.
