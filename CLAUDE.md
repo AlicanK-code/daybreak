@@ -51,6 +51,12 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - Commit messages are short and in the imperative mood ("Add weekly schedules").
 - Never commit `.env`.
 
+## Changelog and releases
+- `CHANGELOG.md` records every user-facing change, grouped per version into **Features**, **UI & design** and **Fixes**.
+- Every commit that changes the app adds its entry under **Unreleased** in the same commit.
+- Changes stay under Unreleased until the owner says "release"; they may bundle several changes into one version.
+- On "release": move the Unreleased entries under a new version heading dated today, bump `version` in `package.json` (minor for features or significant UI changes, patch for fixes only), commit, tag the commit (`git tag -a v0.8.0`), and push the commit and the tag.
+
 ## Roadmap
 1. Custom schedules per habit (e.g. Mon/Wed/Fri), so streaks count only scheduled days
 2. One-off tasks alongside daily habits
