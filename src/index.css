@@ -190,6 +190,35 @@
     linear-gradient(0deg, rgb(220 38 38 / 0.14), transparent);
 }
 
+/* Level number on the flame badge: white with a dark ember outline, readable on every layer. */
+.level-number {
+  text-shadow:
+    0 0 2px var(--color-sun-outline),
+    0 1px 2px var(--color-sun-outline),
+    1px 0 1px var(--color-sun-outline),
+    -1px 0 1px var(--color-sun-outline),
+    0 -1px 1px var(--color-sun-outline);
+}
+
+/* The level badge's flame flickers from its base; its speed is set per level. */
+.level-flame-flicker {
+  transform-origin: 50% 100%;
+  animation: level-flame-flicker 1.8s ease-in-out infinite;
+}
+
+@keyframes level-flame-flicker {
+  0%,
+  100% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  30% {
+    transform: scale(0.96, 1.06) skewX(-3deg);
+  }
+  60% {
+    transform: scale(1.03, 0.95) skewX(2deg);
+  }
+}
+
 /* Priority habits: a glowing ember accent along the card's left edge. */
 .priority-edge {
   box-shadow:
