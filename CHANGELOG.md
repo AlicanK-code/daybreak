@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-28
+
 ### Features
 
 - **Priority habits come first** on the Today list, hardest first (hard, then medium, then easy),
@@ -124,7 +126,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/AlicanK-code/questlog/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/AlicanK-code/questlog/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/AlicanK-code/questlog/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/AlicanK-code/questlog/compare/v0.4.0...v0.5.0
