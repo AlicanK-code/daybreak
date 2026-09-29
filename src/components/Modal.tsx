@@ -11,13 +11,13 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  // Rendered into <body> rather than in place: a parent with a backdrop-filter (the frosted panels)
-  // would otherwise become the frame for this fixed overlay, pinning and clipping the dialog inside it.
+  // Rendered into <body> rather than in place, so no parent's styling (e.g. a backdrop-filter, a
+  // transform or overflow) can become the frame for this fixed overlay and clip the dialog.
   return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/75 sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

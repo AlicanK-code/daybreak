@@ -123,7 +123,7 @@ export function Shell() {
       </Modal>
 
       <nav className="sticky top-0 z-30 mt-4 py-2" aria-label="Sections">
-        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface/90 p-1 shadow-lg shadow-bg/50 backdrop-blur" role="tablist">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-line bg-surface/95 p-1 shadow-lg shadow-bg/50" role="tablist">
           {TABS.map(({ id, label, Icon }) => (
             <button
               key={id}

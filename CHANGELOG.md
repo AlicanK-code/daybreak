@@ -11,6 +11,19 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### UI & design
+
+- Cards are still see-through, but no longer blur the moving fire behind them.
+- The background's sparks are now drawn as part of the pixel fire, rising out of the flames as
+  fire-coloured pixel blocks.
+
+### Fixes
+
+- **Much smoother in Firefox** and on slower devices: the Today screen went from about 18 to 58
+  frames per second in Firefox at 1080p (Chrome was already smooth). The live blur behind the
+  cards, the separately animated sparks and the card's continuously repainting glow were the main
+  costs; the glow still pulses, in gentle steps.
+
 ## [0.9.0] - 2026-09-29
 
 ### Features

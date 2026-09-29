@@ -108,7 +108,8 @@
   border-radius: inherit;
   box-shadow: 0 0 14px rgb(255 90 31 / 0.45);
   pointer-events: none;
-  animation: sun-card-pulse 3.2s ease-in-out infinite;
+  /* Stepped rather than smooth: the glow changes 12 times per cycle instead of every frame. */
+  animation: sun-card-pulse 3.2s steps(12) infinite;
 }
 
 @keyframes sun-card-pulse {
@@ -131,58 +132,33 @@
 /* Other cards: the same ember panel and heated top rim as the player card, but calmer
    (no pulsing glow), so the player card stays the centrepiece. */
 .sun-panel {
-  /* Frosted and see-through, like the tab bar, so the fire glows softly through. */
+  /* See-through, so the fire glows softly behind it. No backdrop blur: blurring over the moving fire
+     costs a full re-blur every frame, which made some browsers stutter badly. */
   background:
     linear-gradient(90deg, transparent 15%, rgb(255 140 50 / 0.32) 50%, transparent 85%) top / 100% 1px no-repeat,
-    linear-gradient(180deg, rgb(43 22 28 / 0.72), rgb(33 17 23 / 0.72));
-  backdrop-filter: blur(8px) saturate(1.2);
+    linear-gradient(180deg, rgb(43 22 28 / 0.84), rgb(33 17 23 / 0.84));
   box-shadow: 0 6px 24px -14px rgb(220 38 38 / 0.3);
 }
 
 /* A fainter frosted panel for things not yet earned, such as locked trophies. */
 .sun-panel-faint {
-  background: rgb(33 17 23 / 0.45);
-  backdrop-filter: blur(8px);
+  background: rgb(33 17 23 / 0.6);
 }
 
 /* Finished habits: the frosted panel with a soft green tint on top. */
 .sun-panel-done {
   background:
     linear-gradient(rgb(74 227 168 / 0.08), rgb(74 227 168 / 0.08)),
-    linear-gradient(180deg, rgb(43 22 28 / 0.72), rgb(33 17 23 / 0.72));
-  backdrop-filter: blur(8px) saturate(1.2);
+    linear-gradient(180deg, rgb(43 22 28 / 0.84), rgb(33 17 23 / 0.84));
 }
 
-/* Background fire: pixel fire along the bottom of the screen, with fragments drifting up out of it.
-   The layer is kept faint enough that content stays readable. */
+/* Background fire: pixel fire along the bottom of the screen, with sparks rising out of it. The layer
+   is kept faint enough that content stays readable. */
 .bg-flames {
   opacity: 0.35;
 }
 
 /* Pixel sprites climb in choppy steps, like the fire itself. */
-.bg-fleck {
-  animation: bg-fleck-rise 9s steps(90) infinite;
-  will-change: transform, opacity;
-}
-
-/* Sprites drift up most of the screen, wandering sideways, and burn out. */
-@keyframes bg-fleck-rise {
-  0% {
-    transform: translate(0, 0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(var(--drift, 0), -75vh);
-    opacity: 0;
-  }
-}
-
 /* A steady ember glow along the bottom edge that the flames rise out of. */
 .bg-flame-glow {
   background:

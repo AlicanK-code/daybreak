@@ -76,3 +76,57 @@ export function seededRandom(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
+
+/** A spark flying up out of the fire: one fire pixel that rises, drifts and cools. */
+export interface Spark {
+  x: number
+  y: number
+  heat: number
+}
+
+/** Chance per step that a new spark breaks off the flames, per 100 columns of fire. */
+const SPARK_RATE = 0.6
+/** Chance per step that a spark cools by one heat level as it rises. */
+const SPARK_COOL = 0.18
+
+/**
+ * Advances the sparks one step, in place: sparks rise a cell (sometimes drifting sideways) and cool,
+ * burnt-out or escaped ones are dropped, and new ones break off the tips of the flames.
+ */
+export function stepSparks(fire: Fire, sparks: Spark[], rand: () => number = Math.random): void {
+  const { width, heat } = fire
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]
+    s.y -= 1
+    if (rand() < 0.3) s.x += rand() < 0.5 ? -1 : 1
+    if (rand() < SPARK_COOL) s.heat -= 1
+    if (s.heat <= 0 || s.y < 0 || s.x < 0 || s.x >= width) sparks.splice(i, 1)
+  }
+  let births = (width / 100) * SPARK_RATE
+  while (births > 0) {
+    if (rand() < births) {
+      // Break off just above the highest burning cell in a random column.
+      const x = Math.floor(rand() * width)
+      for (let y = 0; y < fire.height - 1; y++) {
+        const h = heat[y * width + x]
+        if (h >= 3) {
+          if (y > 0) sparks.push({ x, y: y - 1, heat: Math.min(MAX_HEAT, h + 2) })
+          break
+        }
+      }
+    }
+    births -= 1
+  }
+}
+
+/** Draws the sparks over the fire's pixels (after paintFire). */
+export function paintSparks(fire: Fire, sparks: readonly Spark[], pixels: Uint8ClampedArray): void {
+  for (const s of sparks) {
+    const [r, g, b, a] = FIRE_PALETTE[Math.max(0, Math.min(MAX_HEAT, s.heat))]
+    const p = (s.y * fire.width + s.x) * 4
+    pixels[p] = r
+    pixels[p + 1] = g
+    pixels[p + 2] = b
+    pixels[p + 3] = a
+  }
+}

@@ -56,34 +56,3 @@ export function flameStreaks(progress: number): FlameStreak[] {
     }
   })
 }
-
-/** A little pixel sprite of fire breaking off and drifting up the screen. */
-export interface RisingFleck {
-  /** start position across the screen, 0..100 (%) */
-  left: number
-  /** size of one sprite pixel, in px */
-  size: number
-  /** sideways drift over the rise, in vw */
-  drift: number
-  /** which pixel cluster to draw (index into the component's sprite list) */
-  sprite: number
-  tone: number
-  duration: number
-  delay: number
-}
-
-
-export const FLECK_SPRITES = 4
-
-/** Sprites spread across the screen, drifting up at different speeds, sizes and sideways drifts. */
-export function risingFlecks(count = 16): RisingFleck[] {
-  return Array.from({ length: count }, (_, i) => ({
-    left: Math.round(3 + 94 * jitter(i + 101)),
-    size: Math.round(4 + 4 * jitter(i + 103)),
-    drift: Math.round((jitter(i + 107) - 0.5) * 16),
-    sprite: (i * 3) % FLECK_SPRITES,
-    tone: i % 3,
-    duration: 7 + 6 * jitter(i + 113),
-    delay: -13 * jitter(i + 127),
-  }))
-}
