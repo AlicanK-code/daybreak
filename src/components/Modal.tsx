@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   useEffect(() => {
@@ -10,7 +11,9 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  return (
+  // Rendered into <body> rather than in place: a parent with a backdrop-filter (the frosted panels)
+  // would otherwise become the frame for this fixed overlay, pinning and clipping the dialog inside it.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -41,6 +44,7 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

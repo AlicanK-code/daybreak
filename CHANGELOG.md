@@ -11,6 +11,12 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Fixes
+
+- Dialogs opened from inside a card, such as a day's overview in Stats → Activity, now cover the
+  whole screen again instead of being cut off and hidden behind the cards below (a regression from
+  the frosted cards in 0.8.0).
+
 ## [0.8.0] - 2026-09-28
 
 ### Features
