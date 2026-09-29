@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-29
+
 ### Features
 
 - **Turn habits off and on.** "Turn off" in a habit's edit screen (replacing Archive) hides it from
@@ -163,7 +165,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/AlicanK-code/questlog/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/AlicanK-code/questlog/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/AlicanK-code/questlog/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/AlicanK-code/questlog/compare/v0.7.0...v0.8.0
