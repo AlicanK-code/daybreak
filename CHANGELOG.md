@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-29
+
 ### UI & design
 
 - **New logo:** a katana pointing downwards with a spiral of spiky fire winding round its blade,
@@ -173,7 +175,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/AlicanK-code/questlog/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/AlicanK-code/questlog/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/AlicanK-code/questlog/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/AlicanK-code/questlog/compare/v0.8.0...v0.8.1
