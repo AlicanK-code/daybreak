@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Archive, Flag, Trash2 } from 'lucide-react'
+import { Flag, PowerOff, Trash2 } from 'lucide-react'
 import { BASE_XP } from '../game/xp'
 import type { Difficulty, Habit, NewHabit } from '../lib/types'
 
@@ -15,11 +15,12 @@ interface Props {
   initial?: Habit
   busy?: boolean
   onSubmit: (h: NewHabit) => void
-  onArchive?: () => void
+  /** switch the habit off: hidden from Today until switched back on */
+  onTurnOff?: () => void
   onDelete?: () => void
 }
 
-export function HabitForm({ initial, busy, onSubmit, onArchive, onDelete }: Props) {
+export function HabitForm({ initial, busy, onSubmit, onTurnOff, onDelete }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [icon, setIcon] = useState(initial?.icon ?? ICONS[0])
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
@@ -111,9 +112,9 @@ export function HabitForm({ initial, busy, onSubmit, onArchive, onDelete }: Prop
 
       {initial && (
         <div className="flex gap-2 border-t border-line pt-4">
-          {onArchive && (
-            <button type="button" onClick={onArchive} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line py-2 text-sm text-muted hover:text-ink">
-              <Archive size={16} /> Archive
+          {onTurnOff && (
+            <button type="button" onClick={onTurnOff} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line py-2 text-sm text-muted hover:text-ink">
+              <PowerOff size={16} /> Turn off
             </button>
           )}
           {onDelete && (

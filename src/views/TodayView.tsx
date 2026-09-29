@@ -1,5 +1,5 @@
 import { AnimatePresence, Reorder, motion } from 'motion/react'
-import { History, Plus } from 'lucide-react'
+import { ChevronDown, History, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DayOverview } from '../components/DayOverview'
 import { HabitCard } from '../components/HabitCard'
@@ -141,6 +141,11 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
         <Plus size={20} /> New habit
       </motion.button>
 
+      <TurnedOff
+        habits={habits.filter((h) => h.archivedAt)}
+        onTurnOn={(h) => update.mutate({ id: h.id, patch: { archivedAt: null } }, { onError: fail("Couldn't turn that habit back on") })}
+      />
+
       <Modal open={editing !== null} onClose={closeForm} title={editing === 'new' ? 'New habit' : 'Edit habit'}>
         {editing === 'new' && (
           <HabitForm
@@ -154,14 +159,64 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
             initial={editing}
             busy={update.isPending}
             onSubmit={(patch) => update.mutate({ id: editing.id, patch }, { onSuccess: closeForm, onError: fail("Couldn't save habit") })}
-            onArchive={() =>
-              update.mutate({ id: editing.id, patch: { archivedAt: new Date().toISOString() } }, { onSuccess: closeForm, onError: fail("Couldn't archive habit") })
+            onTurnOff={() =>
+              update.mutate({ id: editing.id, patch: { archivedAt: new Date().toISOString() } }, { onSuccess: closeForm, onError: fail("Couldn't turn that habit off") })
             }
             onDelete={() => remove.mutate(editing.id, { onSuccess: closeForm, onError: fail("Couldn't delete habit") })}
           />
         )}
       </Modal>
     </div>
+  )
+}
+
+/**
+ * Habits that are switched off: hidden from Today and not counted until switched back on. Tucked
+ * into a collapsible list below the habits, each with a switch to turn it back on.
+ */
+function TurnedOff({ habits, onTurnOn }: { habits: Habit[]; onTurnOn: (h: Habit) => void }) {
+  const [open, setOpen] = useState(false)
+  if (habits.length === 0) return null
+  return (
+    <section className="sun-panel rounded-2xl border border-line">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-muted transition hover:text-ink"
+      >
+        <span>
+          Turned off <span className="text-faint">· {habits.length}</span>
+        </span>
+        <ChevronDown size={18} className={`transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul className="space-y-1.5 border-t border-line p-3">
+          {habits.map((h) => (
+            <li key={h.id} className="flex items-center gap-3 rounded-xl p-1.5">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface-2 text-lg opacity-50" aria-hidden>
+                {h.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-muted">{h.title}</p>
+                <p className="text-xs text-faint capitalize">{h.difficulty}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={false}
+                onClick={() => onTurnOn(h)}
+                aria-label={`Turn ${h.title} back on`}
+                title="Turn back on"
+                className="relative h-6 w-10 shrink-0 rounded-full bg-surface-2 ring-1 ring-line transition hover:ring-primary-soft"
+              >
+                <span className="absolute top-0.5 left-0.5 size-5 rounded-full bg-faint shadow transition-all" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

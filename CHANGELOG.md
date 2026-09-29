@@ -11,6 +11,13 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **Turn habits off and on.** "Turn off" in a habit's edit screen (replacing Archive) hides it from
+  Today and stops it counting. Turned-off habits collect in a **Turned off** list below your habits,
+  each with a switch to turn it back on, keeping its history, streak record and settings. Days it
+  was off count as missed once it's back on.
+
 ## [0.9.0] - 2026-09-29
 
 ### Features
