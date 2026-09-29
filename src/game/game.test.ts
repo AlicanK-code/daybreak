@@ -208,6 +208,21 @@ describe('dayOverview', () => {
   })
 })
 
+describe('turning habits off and on', () => {
+  it('stops counting a habit from the day it is turned off', () => {
+    const off = habit('a', { archivedAt: `${addDays(TODAY, -3)}T09:00:00` })
+    expect(dayOverview([off], [], addDays(TODAY, -4)).missed).toHaveLength(1)
+    expect(dayOverview([off], [], addDays(TODAY, -3)).missed).toHaveLength(0)
+    expect(dayOverview([off], [], TODAY).total).toBe(0)
+  })
+
+  it('counts every day again once turned back on, including the days it was off', () => {
+    const backOn = habit('a', { archivedAt: null })
+    expect(dayOverview([backOn], [], addDays(TODAY, -3)).missed).toHaveLength(1)
+    expect(computeProgress([backOn], [], TODAY).todayTotal).toBe(1)
+  })
+})
+
 describe('changing past days', () => {
   it('allows today and the last week, but not the future or older days', () => {
     expect(isEditableDay(TODAY, TODAY)).toBe(true)
