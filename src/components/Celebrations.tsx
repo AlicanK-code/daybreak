@@ -1,6 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { levelFlame } from '../lib/levelFlame'
+import { LevelBadge } from './LevelFlame'
+
+/** The level-up popup shows the flame badge larger than on the player card. */
+const LEVEL_UP_SCALE = 1.8
 
 export interface Toast {
   id: string
@@ -98,14 +103,17 @@ export function LevelUpModal({ level, title, onClose }: { level: number | null; 
             />
             <div className="relative">
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-xp">Level up!</p>
-              <motion.div
-                className="sun-badge mx-auto my-5 grid size-28 place-items-center rounded-full text-5xl font-extrabold text-sun-outline"
-                initial={{ rotate: -180, scale: 0 }}
-                animate={{ rotate: 0, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.15 }}
-              >
-                {level}
-              </motion.div>
+              {/* The new flame badge, rising up from its base with a bounce */}
+              <div className="my-5 flex items-end justify-center" style={{ height: levelFlame(level).height * LEVEL_UP_SCALE }}>
+                <motion.div
+                  className="origin-bottom"
+                  initial={{ scale: 0, y: 20 }}
+                  animate={{ scale: LEVEL_UP_SCALE, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.15 }}
+                >
+                  <LevelBadge level={level} />
+                </motion.div>
+              </div>
               <h2 id="levelup-title" className="text-2xl font-extrabold">
                 You reached level {level}
               </h2>
