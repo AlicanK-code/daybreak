@@ -94,7 +94,7 @@ export function Shell() {
     <div className="mx-auto max-w-2xl px-4 pb-16">
       <header className="flex items-center justify-between py-4">
         <div className="flex items-center gap-2">
-          <Logo size={28} />
+          <Logo size={36} />
           <span className="text-lg font-extrabold tracking-tight">QuestLog</span>
           {session.mode === 'demo' && (
             <span className="rounded-full bg-xp/15 px-2 py-0.5 text-xs font-semibold text-xp">Demo</span>

@@ -41,7 +41,7 @@ export function AuthScreen({ onDemo }: { onDemo: () => void }) {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
         <div className="mb-4 flex justify-center">
-          <Logo size={56} />
+          <Logo size={96} />
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight">QuestLog</h1>
         <p className="mt-2 text-muted">Turn your daily habits into an RPG.</p>

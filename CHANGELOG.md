@@ -11,6 +11,14 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### UI & design
+
+- **New logo:** a katana pointing downwards with a spiral of spiky fire winding round its blade,
+  replacing the shield, and shown larger in the header and on the sign-in screen. A simplified,
+  bolder version is used at small sizes and as the browser tab icon, which until now still showed
+  the old purple shield.
+- The browser's toolbar colour on phones now matches the ember theme instead of the old purple.
+
 ## [0.10.0] - 2026-09-29
 
 ### Features
