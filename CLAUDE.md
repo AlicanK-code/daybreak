@@ -64,3 +64,4 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 4. Coins and a personal reward shop
 5. PWA (installable) and reminder notifications
 6. ~~Drag-to-reorder habits~~ (done in 0.6.0)
+7. Firefox performance: a fix is ready on the `firefox-performance` branch (Firefox 18 → about 60 fps, but drops the frosted blur behind the cards). See `docs/firefox-performance.md`.
