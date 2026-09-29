@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-29
+
 ### Features
 
 - **Fill in or undo past days.** In Stats → Activity, tap any day from the last 7 days and tap a
@@ -154,7 +156,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/AlicanK-code/questlog/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/AlicanK-code/questlog/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/AlicanK-code/questlog/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/AlicanK-code/questlog/compare/v0.6.0...v0.7.0
