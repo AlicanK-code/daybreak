@@ -11,6 +11,26 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **Fill in or undo past days.** In Stats → Activity, tap any day from the last 7 days and tap a
+  habit to switch it between done and not done, so a forgotten tick doesn't cost you a streak.
+  Filled-in days earn the XP they would have earned on the day, including the streak bonus, and
+  streaks heal straight away; XP already earned on later days stays as it was.
+- A **"not ticked off yesterday"** shortcut appears on Today when yesterday has unfinished habits,
+  opening yesterday's overview to fill them in.
+
+### UI & design
+
+- The **level-up celebration** now shows the new flame badge, rising up large in the middle of the
+  popup, instead of the old round sun disc.
+- Completions filled in after the day show an **Added later** tag in the daily overview.
+
+### Fixes
+
+- Early Bird and Night Owl trophies only count habits ticked off on the day itself, not ones filled
+  in later.
+
 ## [0.8.1] - 2026-09-29
 
 ### Fixes

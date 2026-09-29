@@ -1,5 +1,5 @@
-import { toDayKey } from '../lib/dates'
 import type { Completion, Habit } from '../lib/types'
+import { isActiveOn, isBackfilled } from './days'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
 import { levelInfo, type LevelInfo } from './xp'
 
@@ -31,13 +31,6 @@ export interface Progress {
   habits: Map<string, HabitProgress>
 }
 
-const dayOf = (iso: string) => toDayKey(new Date(iso))
-
-function isActiveOn(habit: Habit, day: string): boolean {
-  if (dayOf(habit.createdAt) > day) return false
-  if (habit.archivedAt && dayOf(habit.archivedAt) <= day) return false
-  return true
-}
 
 /**
  * Derives every game number (XP, level, streaks, achievements inputs) from raw
@@ -58,9 +51,12 @@ export function computeProgress(habits: Habit[], completions: Completion[], toda
     totalXp += c.xpEarned
     if (c.completedOn === today) xpToday += c.xpEarned
     if (difficultyById.get(c.habitId) === 'hard') hardCompletions++
-    const hour = new Date(c.completedAt).getHours()
-    if (hour < 7) earlyBird = true
-    if (hour >= 23) nightOwl = true
+    // Early Bird / Night Owl are about when a habit was really done, so filled-in days don't count.
+    if (!isBackfilled(c)) {
+      const hour = new Date(c.completedAt).getHours()
+      if (hour < 7) earlyBird = true
+      if (hour >= 23) nightOwl = true
+    }
     if (!byHabit.has(c.habitId)) byHabit.set(c.habitId, new Set())
     byHabit.get(c.habitId)!.add(c.completedOn)
     if (!byDay.has(c.completedOn)) byDay.set(c.completedOn, new Set())

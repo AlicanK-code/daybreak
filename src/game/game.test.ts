@@ -4,6 +4,8 @@ import type { Completion, Habit } from '../lib/types'
 import { BADGES, unlockedBadgeIds } from './badges'
 import { computeProgress } from './progress'
 import { completionRate, dailyTotals, dayOverview } from './stats'
+import { EDIT_WINDOW_DAYS, canEditHabitOn, isEditableDay, xpForDay } from './backfill'
+import { isBackfilled } from './days'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
 import { levelInfo, xpForCompletion, xpToReachLevel } from './xp'
 
@@ -203,5 +205,67 @@ describe('dayOverview', () => {
     const habits = [habit('a'), habit('b')]
     expect(dayOverview(habits, [done('a', DAY), done('b', DAY)], DAY).perfect).toBe(true)
     expect(dayOverview([], [], DAY)).toMatchObject({ total: 0, perfect: false })
+  })
+})
+
+describe('changing past days', () => {
+  it('allows today and the last week, but not the future or older days', () => {
+    expect(isEditableDay(TODAY, TODAY)).toBe(true)
+    expect(isEditableDay(addDays(TODAY, -1), TODAY)).toBe(true)
+    expect(isEditableDay(addDays(TODAY, -EDIT_WINDOW_DAYS), TODAY)).toBe(true)
+    expect(isEditableDay(addDays(TODAY, -EDIT_WINDOW_DAYS - 1), TODAY)).toBe(false)
+    expect(isEditableDay(addDays(TODAY, 1), TODAY)).toBe(false)
+  })
+
+  it("won't change a habit on a day before it existed or after it was archived", () => {
+    const yesterday = addDays(TODAY, -1)
+    expect(canEditHabitOn(habit('a'), yesterday, TODAY)).toBe(true)
+    expect(canEditHabitOn(habit('new', { createdAt: `${TODAY}T08:00:00` }), yesterday, TODAY)).toBe(false)
+    expect(canEditHabitOn(habit('old', { archivedAt: `${addDays(TODAY, -3)}T08:00:00` }), yesterday, TODAY)).toBe(false)
+  })
+
+  it('gives a filled-in day the XP it would have earned on time, streak bonus included', () => {
+    const h = habit('a', { difficulty: 'hard' })
+    const day = addDays(TODAY, -2)
+    // Done on the 3 days before it: a 3-day streak going into it, so +15%.
+    const history = [1, 2, 3].map((n) => done('a', addDays(day, -n)))
+    expect(xpForDay(h, history, day)).toBe(xpForCompletion('hard', 3))
+    // With nothing before it, just the base XP.
+    expect(xpForDay(h, [], day)).toBe(xpForCompletion('hard', 0))
+  })
+
+  it("doesn't let a day's own completion or other habits affect its XP", () => {
+    const h = habit('a')
+    const day = addDays(TODAY, -2)
+    const noise = [done('a', day), done('b', addDays(day, -1)), done('b', addDays(day, -2))]
+    expect(xpForDay(h, noise, day)).toBe(xpForCompletion('medium', 0))
+  })
+
+  it('heals the streak when a missed day is filled in, without touching XP already earned', () => {
+    const h = habit('a')
+    const gap = addDays(TODAY, -2)
+    const before = [done('a', addDays(TODAY, -3), 20), done('a', addDays(TODAY, -1), 20), done('a', TODAY, 20)]
+    expect(computeProgress([h], before, TODAY).habits.get('a')!.currentStreak).toBe(2)
+    const filled = [...before, done('a', gap, xpForDay(h, before, gap))]
+    const p = computeProgress([h], filled, TODAY)
+    expect(p.habits.get('a')!.currentStreak).toBe(4)
+    expect(p.level.totalXp).toBe(60 + xpForDay(h, before, gap))
+  })
+
+  it('spots completions that were added after the fact', () => {
+    expect(isBackfilled(done('a', TODAY, 20, '09:00:00'))).toBe(false)
+    const late = { ...done('a', addDays(TODAY, -2)), completedAt: `${TODAY}T09:00:00` }
+    expect(isBackfilled(late)).toBe(true)
+  })
+
+  it("doesn't award Early Bird or Night Owl for filled-in days", () => {
+    const early = { ...done('a', addDays(TODAY, -1)), completedAt: `${TODAY}T06:00:00` }
+    const night = { ...done('b', addDays(TODAY, -2)), completedAt: `${TODAY}T23:30:00` }
+    const p = computeProgress([habit('a'), habit('b')], [early, night], TODAY)
+    expect(p.earlyBird).toBe(false)
+    expect(p.nightOwl).toBe(false)
+    // Done on the day itself, the same times still count.
+    const onTime = computeProgress([habit('a')], [done('a', TODAY, 20, '06:00:00')], TODAY)
+    expect(onTime.earlyBird).toBe(true)
   })
 })
