@@ -1,17 +1,20 @@
 import { AnimatePresence, Reorder, motion } from 'motion/react'
-import { Plus } from 'lucide-react'
-import { useState } from 'react'
+import { History, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { DayOverview } from '../components/DayOverview'
 import { HabitCard } from '../components/HabitCard'
 import { HabitForm } from '../components/HabitForm'
 import { Modal } from '../components/Modal'
 import { useCreateHabit, useDeleteHabit, useReorderHabits, useToggleCompletion, useUpdateHabit } from '../data/queries'
 import type { Progress } from '../game/progress'
-import { formatDay } from '../lib/dates'
+import { dayOverview } from '../game/stats'
+import { addDays, formatDay } from '../lib/dates'
 import { moveItem, orderHabits } from '../lib/order'
-import type { Habit } from '../lib/types'
+import type { Completion, Habit } from '../lib/types'
 
 interface Props {
   habits: Habit[]
+  completions: Completion[]
   progress: Progress
   today: string
   onError: (message: string) => void
@@ -22,7 +25,11 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
 
-export function TodayView({ habits, progress, today, onError }: Props) {
+export function TodayView({ habits, completions, progress, today, onError }: Props) {
+  // Yesterday's unticked habits, offered as a shortcut to fill them in.
+  const yesterday = addDays(today, -1)
+  const yesterdayMissed = useMemo(() => dayOverview(habits, completions, yesterday).missed.length, [habits, completions, yesterday])
+  const [reviewDay, setReviewDay] = useState<string | null>(null)
   const [editing, setEditing] = useState<Habit | 'new' | null>(null)
   const toggle = useToggleCompletion()
   const create = useCreateHabit()
@@ -77,6 +84,21 @@ export function TodayView({ habits, progress, today, onError }: Props) {
           {progress.xpToday > 0 && <p className="mt-0.5 text-sm font-semibold text-xp">+{progress.xpToday} XP earned today</p>}
         </div>
       </section>
+
+      {yesterdayMissed > 0 && (
+        <button
+          type="button"
+          onClick={() => setReviewDay(yesterday)}
+          className="flex w-full items-center gap-2.5 rounded-xl border border-dashed border-line px-3.5 py-2.5 text-left text-sm text-muted transition hover:border-primary-soft/60 hover:text-ink"
+        >
+          <History size={17} className="shrink-0 text-primary-soft" />
+          <span className="flex-1">
+            {yesterdayMissed} habit{yesterdayMissed === 1 ? '' : 's'} not ticked off yesterday.
+          </span>
+          <span className="shrink-0 font-semibold text-primary-soft">Fill in</span>
+        </button>
+      )}
+      <DayOverview day={reviewDay} today={today} habits={habits} completions={completions} onClose={() => setReviewDay(null)} />
 
       {active.length > 0 && (
         <Reorder.Group axis="y" values={ids} onReorder={setDragOrder} className="space-y-2.5">

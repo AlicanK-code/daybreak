@@ -1,5 +1,6 @@
 import { dayDiff, lastNDays, toDayKey } from '../lib/dates'
 import type { Completion, Habit } from '../lib/types'
+import { isActiveOn } from './days'
 
 export interface DayTotal {
   day: string
@@ -61,9 +62,7 @@ export function dayOverview(habits: Habit[], completions: Completion[], day: str
       done.push({ habit, completion })
       continue
     }
-    const created = toDayKey(new Date(habit.createdAt))
-    const archived = habit.archivedAt ? toDayKey(new Date(habit.archivedAt)) : null
-    if (created <= day && (archived === null || archived > day)) missed.push(habit)
+    if (isActiveOn(habit, day)) missed.push(habit)
   }
   done.sort((a, b) => a.completion.completedAt.localeCompare(b.completion.completedAt))
   const total = done.length + missed.length

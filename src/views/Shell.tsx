@@ -154,7 +154,7 @@ export function Shell() {
             ))}
           </div>
         ) : tab === 'today' ? (
-          <TodayView habits={habits} progress={progress} today={today} onError={(m) => pushToast({ icon: '⚠️', title: m, body: 'Your change was rolled back.', tone: 'error' })} />
+          <TodayView habits={habits} completions={completions} progress={progress} today={today} onError={(m) => pushToast({ icon: '⚠️', title: m, body: 'Your change was rolled back.', tone: 'error' })} />
         ) : tab === 'stats' ? (
           <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-surface" />}>
             <StatsView habits={habits} completions={completions} progress={progress} today={today} />

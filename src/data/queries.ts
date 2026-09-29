@@ -84,7 +84,7 @@ export function useToggleCompletion() {
       const previous = qc.getQueryData<Completion[]>(keys.completions)
       qc.setQueryData<Completion[]>(keys.completions, (old = []) =>
         a.type === 'add'
-          ? [...old, { ...a.input, id: `optimistic-${a.input.habitId}`, completedAt: new Date().toISOString() }]
+          ? [...old, { ...a.input, id: `optimistic-${a.input.habitId}-${a.input.completedOn}`, completedAt: new Date().toISOString() }]
           : old.filter((c) => !(c.habitId === a.habitId && c.completedOn === a.day)),
       )
       return { previous }
@@ -95,7 +95,7 @@ export function useToggleCompletion() {
     onSuccess: (saved, a) => {
       if (a.type === 'add' && saved) {
         qc.setQueryData<Completion[]>(keys.completions, (old = []) =>
-          old.map((c) => (c.id === `optimistic-${a.input.habitId}` ? saved : c)),
+          old.map((c) => (c.id === `optimistic-${a.input.habitId}-${a.input.completedOn}` ? saved : c)),
         )
       }
     },
