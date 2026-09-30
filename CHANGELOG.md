@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to QuestLog are recorded here, newest first. The format follows
+All notable changes to Daybreak (called QuestLog until 0.14.0) are recorded here, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/): a new **minor** version (0.x.0) for new features or
 significant UI changes, a **patch** (0.x.y) for fixes only.
@@ -10,6 +10,14 @@ and **Fixes** (bugs fixed). Changes collect under **Unreleased** until they're r
 version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
+
+### UI & design
+
+- **QuestLog is now Daybreak**: a fresh start every morning, matching the fire and sun theme. The
+  new name is on the header, sign-in screen, browser tab and installed app. Your data, settings and
+  web address are unchanged; an installed app picks up the new name after its next update, though
+  some phones keep the old home-screen label until it's reinstalled.
+- The new-habit button reads **Add habit**.
 
 ## [0.13.0] - 2026-09-30
 

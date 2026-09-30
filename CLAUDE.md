@@ -1,4 +1,6 @@
-# QuestLog: project guide for Claude
+# Daybreak: project guide for Claude
+
+The app was renamed from QuestLog in 0.14.0. The repo, package name, Vercel URL and storage keys (`questlog-*`) keep the old name on purpose: renaming the keys would wipe players' saved demo data and settings.
 
 A gamified daily habit tracker. It's a portfolio piece that the owner also uses every day, so keep the code clean, typed and tested, and keep the experience fun.
 

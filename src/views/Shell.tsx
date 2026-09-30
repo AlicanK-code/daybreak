@@ -95,7 +95,7 @@ export function Shell() {
       <header className="flex items-center justify-between py-4">
         <div className="flex items-center gap-2">
           <Logo size={36} />
-          <span className="text-lg font-extrabold tracking-tight">QuestLog</span>
+          <span className="text-lg font-extrabold tracking-tight">Daybreak</span>
           {session.mode === 'demo' && (
             <span className="rounded-full bg-xp/15 px-2 py-0.5 text-xs font-semibold text-xp">Demo</span>
           )}

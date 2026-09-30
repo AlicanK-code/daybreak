@@ -16,8 +16,8 @@ export default defineConfig({
       // The icons are already cached by the image pattern below; don't list them twice.
       includeManifestIcons: false,
       manifest: {
-        name: 'QuestLog',
-        short_name: 'QuestLog',
+        name: 'Daybreak',
+        short_name: 'Daybreak',
         description: 'A gamified daily habit tracker. Earn XP, level up, keep streaks alive.',
         start_url: '/',
         scope: '/',

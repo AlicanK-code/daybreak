@@ -9,6 +9,7 @@ import type { Repo } from './repo'
  * (e.g. from a portfolio link) try the app without creating an account.
  */
 
+// Keys keep the app's original name (QuestLog) so existing saved data isn't lost.
 const STORAGE_KEY = 'questlog-demo-v1'
 const NAME_KEY = 'questlog-demo-name'
 export const DEMO_DEFAULT_NAME = 'Demo Adventurer'
