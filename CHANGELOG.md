@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-30
+
 ### UI & design
 
 - **QuestLog is now Daybreak**: a fresh start every morning, matching the fire and sun theme. The
@@ -200,7 +202,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/AlicanK-code/questlog/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/AlicanK-code/questlog/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/AlicanK-code/questlog/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/AlicanK-code/questlog/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/AlicanK-code/questlog/compare/v0.10.0...v0.11.0
