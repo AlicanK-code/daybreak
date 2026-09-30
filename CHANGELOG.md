@@ -11,6 +11,13 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **Install QuestLog as an app.** On a phone, use the browser's "Install app" / "Add to Home Screen";
+  on desktop Chrome or Edge, use the install button in the address bar. It opens full screen with
+  its own katana icon, starts instantly, and the app itself loads offline. Signing in and your
+  habits still need a connection. Updates arrive automatically each time the site is deployed.
+
 ## [0.11.0] - 2026-09-29
 
 ### UI & design
