@@ -11,6 +11,12 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### UI & design
+
+- **The day overview and level flames dialogs now open in the middle of the screen on phones**
+  instead of sliding up from the bottom. Forms (new habit, edit habit, username) stay as bottom
+  sheets, close to your thumb and the keyboard.
+
 ## [0.12.0] - 2026-09-30
 
 ### Features

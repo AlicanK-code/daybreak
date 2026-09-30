@@ -10,7 +10,7 @@ const CELL_FLAME_HEIGHT = levelFlame(FLAME_MAX_LEVEL).height
 /** A dialog showing the flame at each rank it passes through, with the player's stage highlighted. */
 export function LevelFlames({ open, level, onClose }: { open: boolean; level: number; onClose: () => void }) {
   return (
-    <Modal open={open} onClose={onClose} title="Level flames">
+    <Modal open={open} onClose={onClose} centered title="Level flames">
       {open && <LevelFlamesBody level={level} />}
     </Modal>
   )
