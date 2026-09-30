@@ -1,6 +1,6 @@
 # Firefox performance
 
-QuestLog runs smoothly in Chrome but stutters in Firefox. A fix is ready on the
+Daybreak runs smoothly in Chrome but stutters in Firefox. A fix is ready on the
 [`firefox-performance`](https://github.com/AlicanK-code/questlog/tree/firefox-performance) branch, kept
 off `main` for now because it trades away the frosted-glass blur behind the cards. This note records
 what was measured, so the work can be merged or redone later.

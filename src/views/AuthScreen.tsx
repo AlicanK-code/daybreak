@@ -43,7 +43,7 @@ export function AuthScreen({ onDemo }: { onDemo: () => void }) {
         <div className="mb-4 flex justify-center">
           <Logo size={96} />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight">QuestLog</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight">Daybreak</h1>
         <p className="mt-2 text-muted">Turn your daily habits into an RPG.</p>
         <ul className="mt-5 flex justify-center gap-4 text-sm text-muted">
           <li className="flex items-center gap-1.5"><Sparkles size={16} className="text-xp" /> Earn XP</li>

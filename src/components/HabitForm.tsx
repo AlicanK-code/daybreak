@@ -107,7 +107,7 @@ export function HabitForm({ initial, busy, onSubmit, onTurnOff, onDelete }: Prop
         disabled={busy || !title.trim()}
         className="w-full rounded-xl bg-primary py-3 font-semibold text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
       >
-        {initial ? 'Save changes' : 'Add to quest log'}
+        {initial ? 'Save changes' : 'Add habit'}
       </button>
 
       {initial && (

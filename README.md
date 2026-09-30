@@ -1,4 +1,6 @@
-# QuestLog ⚔️
+# Daybreak ⚔️
+
+*Formerly QuestLog.*
 
 **A gamified daily habit tracker.** Complete habits to earn XP, level up, keep streaks alive and unlock trophies, with confetti, sound effects and level-up fanfare to make each tick feel rewarding.
 
