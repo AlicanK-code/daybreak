@@ -1,5 +1,6 @@
 import { addDays, toDayKey } from '../lib/dates'
 import type { Completion, Habit, NewHabit } from '../lib/types'
+import { isScheduledOn } from '../game/schedule'
 import { streakBefore } from '../game/streaks'
 import { xpForCompletion } from '../game/xp'
 import type { Repo } from './repo'
@@ -27,8 +28,8 @@ function load(): DemoState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const state = JSON.parse(raw) as DemoState
-      // Demo data saved before habits had a priority flag.
-      state.habits = state.habits.map((h) => ({ ...h, priority: h.priority ?? false }))
+      // Demo data saved before habits had a priority flag or a schedule.
+      state.habits = state.habits.map((h) => ({ ...h, priority: h.priority ?? false, schedule: h.schedule ?? [] }))
       return (memory = state)
     }
   } catch {
@@ -93,12 +94,13 @@ function seed(): DemoState {
   const HISTORY = 28
   const start = addDays(today, -HISTORY)
   const createdAt = `${start}T08:00:00`
+  // The workout is on Mondays, Wednesdays and Fridays, to show off schedules.
   const defs: (NewHabit & { rate: number })[] = [
-    { title: 'Morning workout', icon: '🏋️', difficulty: 'hard', priority: true, rate: 0.7 },
-    { title: 'Read 20 pages', icon: '📚', difficulty: 'medium', priority: false, rate: 0.85 },
-    { title: 'Drink 2L of water', icon: '💧', difficulty: 'easy', priority: false, rate: 0.9 },
-    { title: 'Code for 1 hour', icon: '💻', difficulty: 'hard', priority: true, rate: 0.65 },
-    { title: 'Plan tomorrow', icon: '🗺️', difficulty: 'easy', priority: false, rate: 0.75 },
+    { title: 'Morning workout', icon: '🏋️', difficulty: 'hard', priority: true, schedule: [{ from: start, days: [0, 2, 4] }], rate: 0.85 },
+    { title: 'Read 20 pages', icon: '📚', difficulty: 'medium', priority: false, schedule: [], rate: 0.85 },
+    { title: 'Drink 2L of water', icon: '💧', difficulty: 'easy', priority: false, schedule: [], rate: 0.9 },
+    { title: 'Code for 1 hour', icon: '💻', difficulty: 'hard', priority: true, schedule: [], rate: 0.65 },
+    { title: 'Plan tomorrow', icon: '🗺️', difficulty: 'easy', priority: false, schedule: [], rate: 0.75 },
   ]
   const habits: Habit[] = defs.map((d, i) => ({
     id: uid(),
@@ -106,6 +108,7 @@ function seed(): DemoState {
     icon: d.icon,
     difficulty: d.difficulty,
     priority: d.priority,
+    schedule: d.schedule,
     sortOrder: i,
     archivedAt: null,
     createdAt,
@@ -115,12 +118,14 @@ function seed(): DemoState {
   const completions: Completion[] = []
   habits.forEach((h, i) => {
     const days = new Set<string>()
+    const scheduled = (d: string) => isScheduledOn(h, d)
     for (let n = HISTORY; n >= 1; n--) {
       const day = addDays(today, -n)
+      if (!scheduled(day)) continue
       // Recent weeks go better than early ones — a nice upward story for the charts.
       const momentum = n < 14 ? 0.12 : 0
       if (rand() < defs[i].rate + momentum) {
-        const xp = xpForCompletion(h.difficulty, streakBefore(days, day))
+        const xp = xpForCompletion(h.difficulty, streakBefore(days, day, scheduled))
         days.add(day)
         const hour = 7 + Math.floor(rand() * 14)
         completions.push({ id: uid(), habitId: h.id, completedOn: day, xpEarned: xp, completedAt: `${day}T${String(hour).padStart(2, '0')}:15:00` })

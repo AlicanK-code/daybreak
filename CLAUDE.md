@@ -46,6 +46,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - Streak bonus: +5% for each prior consecutive day, capped at +50%.
 - Level curve: total XP needed for level n is `60 × (n − 1)^1.8`.
 - A streak stays alive until the end of today and breaks after a full missed day.
+- Schedules (`src/game/schedule.ts`): a habit is due on the weekdays of its schedule, every day by default. `habit.schedule` is a history of periods, so a change applies from its day on and past days keep the old schedule. Per-habit streaks and the streak bonus count due days only; doing a habit on an off day ("extra") earns XP but doesn't change its streak. The day streak skips days with nothing due. Perfect days, missed habits and completion rates only count due habits.
 
 ## Conventions
 - Functional components and hooks, with named exports (except `App`).
@@ -60,7 +61,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - On "release": move the Unreleased entries under a new version heading dated today, bump `version` in `package.json` (minor for features or significant UI changes, patch for fixes only), commit, tag the commit (`git tag -a v0.8.0`), and push the commit and the tag.
 
 ## Roadmap
-1. Custom schedules per habit (e.g. Mon/Wed/Fri), so streaks count only scheduled days
+1. ~~Custom schedules per habit (e.g. Mon/Wed/Fri)~~ (done); "X times a week" schedules still to do
 2. One-off tasks alongside daily habits
 3. Daily bonus quests ("complete 3 hard habits before noon")
 4. Coins and a personal reward shop

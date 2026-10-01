@@ -59,7 +59,7 @@ function DayOverviewBody({ day, today, habits, completions }: { day: string; tod
   }
 
   if (o.total === 0) {
-    return <p className="py-4 text-center text-sm text-muted">No habits were being tracked on this day.</p>
+    return <p className="py-4 text-center text-sm text-muted">No habits were due on this day.</p>
   }
 
   return (
@@ -81,7 +81,7 @@ function DayOverviewBody({ day, today, habits, completions }: { day: string; tod
         <section aria-label="Completed">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Completed</h3>
           <ul className="space-y-1.5">
-            {o.done.map(({ habit, completion }) => {
+            {o.done.map(({ habit, completion, extra }) => {
               const late = isBackfilled(completion)
               return (
                 <li key={habit.id} className="flex items-center gap-3 rounded-xl border border-done/30 bg-done/[0.07] p-2.5">
@@ -92,6 +92,11 @@ function DayOverviewBody({ day, today, habits, completions }: { day: string; tod
                     <p className="truncate font-semibold">{habit.title}</p>
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
                       <span className={`rounded-full px-1.5 py-px font-semibold capitalize ${DIFF_STYLE[habit.difficulty]}`}>{habit.difficulty}</span>
+                      {extra && (
+                        <span className="rounded-full border border-line px-1.5 py-px text-faint" title="Done on a day it wasn't due: earns XP, doesn't change its streak">
+                          Extra
+                        </span>
+                      )}
                       {late ? (
                         <span className="rounded-full border border-line px-1.5 py-px text-faint" title={`Filled in on ${formatDay(toDayKey(new Date(completion.completedAt)), { weekday: 'short', day: 'numeric', month: 'short' })}`}>
                           Added later

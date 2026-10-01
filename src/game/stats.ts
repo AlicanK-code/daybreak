@@ -1,6 +1,6 @@
 import { dayDiff, lastNDays, toDayKey } from '../lib/dates'
 import type { Completion, Habit } from '../lib/types'
-import { isActiveOn } from './days'
+import { isDueOn, isScheduledOn } from './schedule'
 
 export interface DayTotal {
   day: string
@@ -22,35 +22,36 @@ export function dailyTotals(completions: Completion[], n: number, today: string)
 }
 
 /**
- * Share of eligible days in the last `window` days that the habit was completed.
- * Days before the habit was created don't count against it.
+ * Share of due days in the last `window` days that the habit was completed. Days before the habit
+ * was created, and days it wasn't scheduled, don't count against it.
  */
 export function completionRate(habit: Habit, completions: Completion[], window: number, today: string): number {
   const created = toDayKey(new Date(habit.createdAt))
-  const eligible = Math.min(window, dayDiff(created, today) + 1)
-  if (eligible <= 0) return 0
-  const since = lastNDays(eligible, today)[0]
-  const done = completions.filter((c) => c.habitId === habit.id && c.completedOn >= since && c.completedOn <= today).length
-  return Math.min(done / eligible, 1)
+  const span = Math.min(window, dayDiff(created, today) + 1)
+  if (span <= 0) return 0
+  const due = new Set(lastNDays(span, today).filter((d) => isDueOn(habit, d)))
+  if (due.size === 0) return 0
+  const done = completions.filter((c) => c.habitId === habit.id && due.has(c.completedOn)).length
+  return Math.min(done / due.size, 1)
 }
 
 export interface DayOverview {
   day: string
-  /** habits completed that day, in the order they were ticked off */
-  done: { habit: Habit; completion: Completion }[]
-  /** habits that existed that day but weren't completed (for today: not completed yet) */
+  /** habits completed that day, in the order they were ticked off; `extra` ones weren't on their schedule */
+  done: { habit: Habit; completion: Completion; extra: boolean }[]
+  /** habits that were due that day but weren't completed (for today: not completed yet) */
   missed: Habit[]
   xp: number
   /** habits that count for the day: done + missed */
   total: number
-  /** every habit that counted was done (and at least one counted) */
+  /** every habit that was due was done (and at least one was due) */
   perfect: boolean
 }
 
 /**
- * What happened on one day: which habits were done, and which were missed. A habit only counts
- * for days it existed: from the day it was created until the day it was archived. A completion
- * always counts, so history stays intact even if a habit's dates look off.
+ * What happened on one day: which habits were done, and which were missed. A habit is only missed
+ * on days it was due: it existed, wasn't turned off, and its schedule included that weekday. A
+ * completion always counts, so history stays intact even if a habit's dates look off.
  */
 export function dayOverview(habits: Habit[], completions: Completion[], day: string): DayOverview {
   const doneOn = new Map(completions.filter((c) => c.completedOn === day).map((c) => [c.habitId, c]))
@@ -59,10 +60,10 @@ export function dayOverview(habits: Habit[], completions: Completion[], day: str
   for (const habit of [...habits].sort((a, b) => a.sortOrder - b.sortOrder)) {
     const completion = doneOn.get(habit.id)
     if (completion) {
-      done.push({ habit, completion })
+      done.push({ habit, completion, extra: !isScheduledOn(habit, day) })
       continue
     }
-    if (isActiveOn(habit, day)) missed.push(habit)
+    if (isDueOn(habit, day)) missed.push(habit)
   }
   done.sort((a, b) => a.completion.completedAt.localeCompare(b.completion.completedAt))
   const total = done.length + missed.length
@@ -72,6 +73,6 @@ export function dayOverview(habits: Habit[], completions: Completion[], day: str
     missed,
     xp: done.reduce((s, d) => s + d.completion.xpEarned, 0),
     total,
-    perfect: total > 0 && missed.length === 0,
+    perfect: missed.length === 0 && done.some((d) => !d.extra),
   }
 }

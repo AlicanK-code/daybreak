@@ -23,6 +23,18 @@ export function applyOrder<T extends { id: string; sortOrder: number }>(items: r
   return [...listed.sort((a, b) => a.sortOrder - b.sortOrder), ...rest]
 }
 
+/**
+ * Puts a reordered subset back into the full order: the subset's items fill the places they held,
+ * in their new order, and everything else stays where it was. Used when only some habits are shown
+ * (those due today) but the saved order covers them all.
+ */
+export function mergeOrder<T>(full: readonly T[], subset: readonly T[]): T[] {
+  const inSubset = new Set(subset)
+  const next = subset.filter((x) => full.includes(x))
+  let i = 0
+  return [...full.map((x) => (inSubset.has(x) ? next[i++] : x)), ...subset.filter((x) => !full.includes(x))]
+}
+
 type Orderable = { id: string; title: string; difficulty: Difficulty; priority: boolean; sortOrder: number }
 
 const DIFFICULTY_RANK: Record<Difficulty, number> = { hard: 0, medium: 1, easy: 2 }

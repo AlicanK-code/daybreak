@@ -1,15 +1,18 @@
 import { AnimatePresence, Reorder, motion } from 'motion/react'
-import { ChevronDown, History, Plus } from 'lucide-react'
+import { Check, ChevronDown, History, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DayOverview } from '../components/DayOverview'
 import { HabitCard } from '../components/HabitCard'
 import { HabitForm } from '../components/HabitForm'
 import { Modal } from '../components/Modal'
 import { useCreateHabit, useDeleteHabit, useReorderHabits, useToggleCompletion, useUpdateHabit } from '../data/queries'
-import type { Progress } from '../game/progress'
+import type { HabitProgress, Progress } from '../game/progress'
+import { scheduleLabel, scheduleOn } from '../game/schedule'
 import { dayOverview } from '../game/stats'
+import { xpForCompletion } from '../game/xp'
 import { addDays, formatDay } from '../lib/dates'
-import { moveItem, orderHabits } from '../lib/order'
+import { mergeOrder, moveItem, orderHabits } from '../lib/order'
+import { playComplete, playUndo } from '../lib/sound'
 import type { Completion, Habit } from '../lib/types'
 
 interface Props {
@@ -39,19 +42,21 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
   // While a habit is being dragged, the list follows this local order; it's saved on drop.
   const [dragOrder, setDragOrder] = useState<string[] | null>(null)
 
-  // Unfinished habits first, finished ones below. Within each, priority habits come first in a fixed
-  // order (hardest first, then A–Z) and the rest follow the player's own drag-and-drop order, which
-  // is the only part that can be rearranged.
+  // Habits due today, unfinished first and finished below. Within each, priority habits come first in
+  // a fixed order (hardest first, then A–Z) and the rest follow the player's own drag-and-drop order,
+  // which is the only part that can be rearranged. Habits not due today are listed separately.
   const doneToday = new Set([...progress.habits].filter(([, hp]) => hp.doneToday).map(([id]) => id))
-  const active = orderHabits(
-    habits.filter((h) => !h.archivedAt),
-    doneToday,
-  )
+  const switchedOn = habits.filter((h) => !h.archivedAt)
+  const isDue = (h: Habit) => progress.habits.get(h.id)?.dueToday ?? true
+  const active = orderHabits(switchedOn.filter(isDue), doneToday)
+  const notToday = orderHabits(switchedOn.filter((h) => !isDue(h)))
   const byId = new Map(active.map((h) => [h.id, h]))
   const movable = active.filter((h) => !h.priority).map((h) => h.id)
+  // The saved order covers every switched-on habit, so the ones hidden today keep their places.
+  const allMovable = [...switchedOn].sort((a, b) => a.sortOrder - b.sortOrder).filter((h) => !h.priority).map((h) => h.id)
   const ids = dragOrder ?? active.map((h) => h.id)
   const saveOrder = (next: string[], onSettled?: () => void) =>
-    reorder.mutate(next, { onError: fail("Couldn't save the new order"), onSettled })
+    reorder.mutate(mergeOrder(allMovable, next), { onError: fail("Couldn't save the new order"), onSettled })
   // Save only the non-priority order (priority habits snap back to their place), and keep showing
   // the dropped order until the save settles, so the list doesn't flick back first.
   const commitDrag = () => {
@@ -76,7 +81,9 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
           </p>
           <p className="text-sm text-muted">
             {todayTotal === 0
-              ? 'Add your first daily habit to start earning XP.'
+              ? switchedOn.length > 0
+                ? 'Nothing is due today. Enjoy the rest day!'
+                : 'Add your first daily habit to start earning XP.'
               : allDone
                 ? 'Your streaks are safe. Rest well, adventurer.'
                 : `${todayTotal - todayDone} quest${todayTotal - todayDone === 1 ? '' : 's'} left today`}
@@ -108,6 +115,7 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
                 key={h.id}
                 habit={h}
                 hp={progress.habits.get(h.id)!}
+                today={today}
                 onEdit={() => setEditing(h)}
                 onMove={(dir) => {
                   // Move within its own group (unfinished or finished), keeping the other group as is.
@@ -141,6 +149,16 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
         <Plus size={20} /> New habit
       </motion.button>
 
+      <NotToday
+        habits={notToday}
+        progress={progress}
+        today={today}
+        onComplete={(h, xp) =>
+          toggle.mutate({ type: 'add', input: { habitId: h.id, completedOn: today, xpEarned: xp } }, { onError: fail("Couldn't save that completion") })
+        }
+        onUndo={(h) => toggle.mutate({ type: 'remove', habitId: h.id, day: today }, { onError: fail("Couldn't undo that") })}
+      />
+
       <TurnedOff
         habits={habits.filter((h) => h.archivedAt)}
         onTurnOn={(h) => update.mutate({ id: h.id, patch: { archivedAt: null } }, { onError: fail("Couldn't turn that habit back on") })}
@@ -149,6 +167,7 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
       <Modal open={editing !== null} onClose={closeForm} title={editing === 'new' ? 'New habit' : 'Edit habit'}>
         {editing === 'new' && (
           <HabitForm
+            today={today}
             busy={create.isPending}
             onSubmit={(h) => create.mutate(h, { onSuccess: closeForm, onError: fail("Couldn't create habit") })}
           />
@@ -157,6 +176,7 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
           <HabitForm
             key={editing.id}
             initial={editing}
+            today={today}
             busy={update.isPending}
             onSubmit={(patch) => update.mutate({ id: editing.id, patch }, { onSuccess: closeForm, onError: fail("Couldn't save habit") })}
             onTurnOff={() =>
@@ -167,6 +187,100 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
         )}
       </Modal>
     </div>
+  )
+}
+
+/**
+ * Switched-on habits whose schedule skips today, tucked into a collapsible list. They can still be
+ * done as an extra: that earns XP but doesn't change the habit's streak.
+ */
+function NotToday({
+  habits,
+  progress,
+  today,
+  onComplete,
+  onUndo,
+}: {
+  habits: Habit[]
+  progress: Progress
+  today: string
+  onComplete: (h: Habit, xp: number) => void
+  onUndo: (h: Habit) => void
+}) {
+  const [open, setOpen] = useState(false)
+  if (habits.length === 0) return null
+  return (
+    <section className="sun-panel rounded-2xl border border-line">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-muted transition hover:text-ink"
+      >
+        <span>
+          Not today <span className="text-faint">· {habits.length}</span>
+        </span>
+        <ChevronDown size={18} className={`transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="border-t border-line p-3">
+          <p className="mb-2 px-1.5 text-xs text-faint">Not due today. Doing one anyway earns XP but doesn't change its streak.</p>
+          <ul className="space-y-1.5">
+            {habits.map((h) => (
+              <NotTodayRow key={h.id} habit={h} hp={progress.habits.get(h.id)} today={today} onComplete={onComplete} onUndo={onUndo} />
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function NotTodayRow({
+  habit,
+  hp,
+  today,
+  onComplete,
+  onUndo,
+}: {
+  habit: Habit
+  hp: HabitProgress | undefined
+  today: string
+  onComplete: (h: Habit, xp: number) => void
+  onUndo: (h: Habit) => void
+}) {
+  const done = hp?.doneToday ?? false
+  const xp = xpForCompletion(habit.difficulty, hp?.streakBeforeToday ?? 0)
+  return (
+    <li className="flex items-center gap-3 rounded-xl p-1.5">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-lg text-lg ${done ? 'bg-done/15' : 'bg-surface-2 opacity-70'}`} aria-hidden>
+        {habit.icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={`truncate font-semibold ${done ? '' : 'text-muted'}`}>{habit.title}</p>
+        <p className="text-xs text-faint">{scheduleLabel(scheduleOn(habit, today))}</p>
+      </div>
+      <span className={`shrink-0 text-sm font-bold ${done ? 'text-done' : 'text-xp/70'}`}>{done ? 'Extra' : `+${xp} XP`}</span>
+      <button
+        type="button"
+        onClick={() => {
+          if (done) {
+            playUndo()
+            onUndo(habit)
+          } else {
+            playComplete()
+            onComplete(habit, xp)
+          }
+        }}
+        aria-pressed={done}
+        aria-label={done ? `Undo ${habit.title}` : `Do ${habit.title} as an extra for ${xp} XP`}
+        className={`grid size-8 shrink-0 place-items-center rounded-full border-2 transition active:scale-90 ${
+          done ? 'border-done bg-done text-bg hover:brightness-110' : 'border-faint text-transparent hover:border-done hover:text-done/60'
+        }`}
+      >
+        <Check size={16} strokeWidth={3.5} />
+      </button>
+    </li>
   )
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Difficulty } from './types'
-import { applyOrder, moveItem, orderHabits } from './order'
+import { applyOrder, mergeOrder, moveItem, orderHabits } from './order'
 
 describe('moveItem', () => {
   it('moves an item down and up', () => {
@@ -33,6 +33,18 @@ describe('applyOrder', () => {
   it('keeps unlisted items (e.g. archived) after the listed ones, untouched', () => {
     const out = applyOrder([h('a', 0), h('old', 7), h('b', 1)], ['b', 'a'])
     expect(out).toEqual([h('b', 0), h('a', 1), h('old', 7)])
+  })
+})
+
+describe('mergeOrder', () => {
+  it('reorders the shown items in their own places, leaving hidden ones where they were', () => {
+    // b and d are hidden (not due today); a, c, e are shown and get reordered to e, a, c.
+    expect(mergeOrder(['a', 'b', 'c', 'd', 'e'], ['e', 'a', 'c'])).toEqual(['e', 'b', 'a', 'd', 'c'])
+  })
+
+  it('returns the full order unchanged when the subset is unchanged, and appends unknown items', () => {
+    expect(mergeOrder(['a', 'b', 'c'], ['a', 'c'])).toEqual(['a', 'b', 'c'])
+    expect(mergeOrder(['a', 'b'], ['b', 'x'])).toEqual(['a', 'b', 'x'])
   })
 })
 
