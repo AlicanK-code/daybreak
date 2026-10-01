@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-01
+
 ### Features
 
 - **Custom schedules**: choose which weekdays a habit repeats on (e.g. Mon, Wed, Fri) with the new
@@ -215,7 +217,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/daybreak/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/AlicanK-code/daybreak/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/AlicanK-code/daybreak/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/AlicanK-code/daybreak/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/AlicanK-code/daybreak/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/AlicanK-code/daybreak/compare/v0.11.0...v0.12.0
