@@ -6,6 +6,7 @@ import { computeProgress } from './progress'
 import { completionRate, dailyTotals, dayOverview } from './stats'
 import { EDIT_WINDOW_DAYS, canEditHabitOn, isEditableDay, xpForDay } from './backfill'
 import { isBackfilled } from './days'
+import { EVERY_DAY, isDueOn, isScheduledOn, scheduleLabel, scheduleOn, withSchedule } from './schedule'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
 import { levelInfo, xpForCompletion, xpToReachLevel } from './xp'
 
@@ -18,6 +19,7 @@ const habit = (id: string, over: Partial<Habit> = {}): Habit => ({
   difficulty: 'medium',
   sortOrder: 0,
   priority: false,
+  schedule: [],
   archivedAt: null,
   createdAt: '2026-01-01T09:00:00',
   ...over,
@@ -282,5 +284,106 @@ describe('changing past days', () => {
     // Done on the day itself, the same times still count.
     const onTime = computeProgress([habit('a')], [done('a', TODAY, 20, '06:00:00')], TODAY)
     expect(onTime.earlyBird).toBe(true)
+  })
+})
+
+describe('schedules', () => {
+  // TODAY (24 Sep 2026) is a Thursday. Mon/Wed/Fri around it: 14, 16, 18, 21, 23, 25.
+  const MWF = [0, 2, 4]
+  const gym = (over: Partial<Habit> = {}) => habit('gym', { schedule: [{ from: '2026-01-01', days: MWF }], ...over })
+  const runs = ['2026-09-18', '2026-09-21', '2026-09-23'].map((d) => done('gym', d))
+
+  it('is due every day without a schedule, and on the chosen weekdays with one', () => {
+    expect(isScheduledOn(habit('a'), '2026-09-22')).toBe(true)
+    expect(scheduleOn(habit('a'), TODAY)).toEqual(EVERY_DAY)
+    expect(isScheduledOn(gym(), '2026-09-23')).toBe(true)
+    expect(isScheduledOn(gym(), TODAY)).toBe(false)
+    expect(isDueOn(gym({ archivedAt: '2026-09-20T09:00:00' }), '2026-09-23')).toBe(false)
+  })
+
+  it('applies each schedule change from its own day on', () => {
+    const h = habit('a', { schedule: [{ from: '2026-09-21', days: MWF }, { from: '2026-09-23', days: [3] }] })
+    expect(isScheduledOn(h, '2026-09-17')).toBe(true) // a Thursday, before any change: every day
+    expect(isScheduledOn(h, '2026-09-22')).toBe(false) // Tuesday, under Mon/Wed/Fri
+    expect(isScheduledOn(h, TODAY)).toBe(true) // Thursday, under the latest change
+  })
+
+  it('records a change from today, replacing a change made earlier the same day', () => {
+    const past = [{ from: '2026-09-01', days: MWF }]
+    expect(withSchedule(past, [3, 1], TODAY)).toEqual([...past, { from: TODAY, days: [1, 3] }])
+    expect(withSchedule([...past, { from: TODAY, days: [1] }], [5, 6], TODAY)).toEqual([...past, { from: TODAY, days: [5, 6] }])
+    // Changing back to what was already in place adds nothing.
+    expect(withSchedule([...past, { from: TODAY, days: [1] }], MWF, TODAY)).toEqual(past)
+    expect(withSchedule([], EVERY_DAY, TODAY)).toEqual([])
+  })
+
+  it('labels schedules', () => {
+    expect(scheduleLabel(EVERY_DAY)).toBe('Every day')
+    expect(scheduleLabel([4, 3, 2, 1, 0])).toBe('Weekdays')
+    expect(scheduleLabel([6, 5])).toBe('Weekends')
+    expect(scheduleLabel([4, 0, 2])).toBe('Mon, Wed, Fri')
+  })
+
+  it('counts a streak over due days only, skipping the days in between', () => {
+    const p = computeProgress([gym()], runs, TODAY)
+    expect(p.habits.get('gym')).toMatchObject({ currentStreak: 3, bestStreak: 3, streakBeforeToday: 3, dueToday: false })
+    // Still alive on Friday before it's done; broken once Friday is missed.
+    expect(computeProgress([gym()], runs, '2026-09-25').habits.get('gym')!.currentStreak).toBe(3)
+    expect(computeProgress([gym()], runs, '2026-09-26').habits.get('gym')!.currentStreak).toBe(0)
+  })
+
+  it("doesn't let an extra on an off day extend or break a streak", () => {
+    const extra = done('gym', '2026-09-22')
+    const p = computeProgress([gym()], [...runs, extra], TODAY)
+    expect(p.habits.get('gym')).toMatchObject({ currentStreak: 3, bestStreak: 3 })
+    expect(p.level.totalXp).toBe(80) // the extra still earns its XP
+  })
+
+  it('keeps past days under the old schedule after a change', () => {
+    // Every day until Monday the 21st, then Mon/Wed/Fri: Thu-Sun count, then Mon and Wed.
+    const h = habit('a', { schedule: [{ from: '2026-09-21', days: MWF }] })
+    const days = ['2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-23'].map((d) => done('a', d))
+    expect(computeProgress([h], days, TODAY).habits.get('a')!.currentStreak).toBe(6)
+    // Under the old schedule, a missed Saturday still breaks it.
+    const gap = days.filter((c) => c.completedOn !== '2026-09-19')
+    expect(computeProgress([h], gap, TODAY).habits.get('a')!.currentStreak).toBe(3)
+  })
+
+  it('only counts habits due today in today’s total', () => {
+    const p = computeProgress([habit('a'), gym()], [done('gym', TODAY)], TODAY)
+    expect(p.todayTotal).toBe(1)
+    expect(p.todayDone).toBe(0)
+    expect(p.habits.get('gym')).toMatchObject({ doneToday: true, dueToday: false })
+  })
+
+  it('needs only the habits that were due for a perfect day', () => {
+    const p = computeProgress([habit('a'), gym()], [done('a', '2026-09-22'), done('a', '2026-09-23')], TODAY)
+    expect(p.perfectDays).toBe(1) // Tuesday: gym wasn't due. Wednesday: it was, and wasn't done.
+  })
+
+  it('skips days with nothing due in the day streak, but counts extras', () => {
+    expect(computeProgress([gym()], runs, TODAY).dayStreak).toBe(3)
+    expect(computeProgress([gym()], [...runs, done('gym', '2026-09-22')], TODAY).dayStreak).toBe(4)
+  })
+
+  it('shows extras as done and never lists a habit as missed on a day it was off', () => {
+    const o = dayOverview([habit('a'), gym()], [done('gym', '2026-09-22')], '2026-09-22')
+    expect(o.done).toMatchObject([{ habit: { id: 'gym' }, extra: true }])
+    expect(o.missed.map((h) => h.id)).toEqual(['a'])
+    expect(o.perfect).toBe(false)
+    expect(dayOverview([gym()], [done('gym', '2026-09-22')], '2026-09-22').perfect).toBe(false) // only an extra
+    expect(dayOverview([gym()], [], '2026-09-22')).toMatchObject({ total: 0, missed: [] })
+  })
+
+  it('works out a filled-in day’s streak bonus over due days', () => {
+    // Filling in Wednesday the 23rd, after Friday and Monday: a 2-day streak going in.
+    const before = runs.filter((c) => c.completedOn !== '2026-09-23')
+    expect(xpForDay(gym(), before, '2026-09-23')).toBe(xpForCompletion('medium', 2))
+  })
+
+  it('measures the completion rate over due days only', () => {
+    // Last 7 days (18th to 24th): due Fri, Mon, Wed. Done Fri and Mon, plus an extra on Tuesday.
+    const cs = [done('gym', '2026-09-18'), done('gym', '2026-09-21'), done('gym', '2026-09-22')]
+    expect(completionRate(gym(), cs, 7, TODAY)).toBeCloseTo(2 / 3)
   })
 })

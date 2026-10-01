@@ -1,7 +1,8 @@
 import { AnimatePresence, Reorder, motion, useDragControls } from 'motion/react'
-import { Check, Flag, Flame, GripVertical, Pencil } from 'lucide-react'
+import { CalendarDays, Check, Flag, Flame, GripVertical, Pencil } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { HabitProgress } from '../game/progress'
+import { EVERY_DAY, scheduleLabel, scheduleOn } from '../game/schedule'
 import { xpForCompletion } from '../game/xp'
 import { burstFrom } from '../lib/confetti'
 import { playComplete, playUndo } from '../lib/sound'
@@ -11,6 +12,7 @@ import type { Habit } from '../lib/types'
 interface Props {
   habit: Habit
   hp: HabitProgress
+  today: string
   onComplete: (xp: number) => void
   onUndo: () => void
   onEdit: () => void
@@ -20,13 +22,14 @@ interface Props {
   onDragEnd: () => void
 }
 
-export function HabitCard({ habit, hp, onComplete, onUndo, onEdit, onMove, onDragEnd }: Props) {
+export function HabitCard({ habit, hp, today, onComplete, onUndo, onEdit, onMove, onDragEnd }: Props) {
   const drag = useDragControls()
   const btn = useRef<HTMLButtonElement>(null)
   const [floats, setFloats] = useState<{ id: number; xp: number }[]>([])
   const xp = xpForCompletion(habit.difficulty, hp.streakBeforeToday)
   const bonus = xp - xpForCompletion(habit.difficulty, 0)
   const done = hp.doneToday
+  const days = scheduleOn(habit, today)
 
   function toggle() {
     if (done) {
@@ -107,6 +110,11 @@ export function HabitCard({ habit, hp, onComplete, onUndo, onEdit, onMove, onDra
             </span>
           )}
           <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${DIFF_STYLE[habit.difficulty]}`}>{habit.difficulty}</span>
+          {days.length < EVERY_DAY.length && (
+            <span className="flex items-center gap-1 text-muted" title="Due on these days">
+              <CalendarDays size={12} aria-hidden /> {scheduleLabel(days)}
+            </span>
+          )}
           <span className={`flex items-center gap-0.5 font-semibold ${hp.currentStreak > 0 ? 'text-streak' : 'text-faint'}`} title="Current streak">
             <Flame size={13} className={hp.currentStreak > 0 ? 'fill-streak/40' : ''} />
             {hp.currentStreak}

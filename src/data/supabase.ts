@@ -17,6 +17,7 @@ interface HabitRow {
   difficulty: Habit['difficulty']
   sort_order: number
   priority: boolean
+  schedule: Habit['schedule']
   archived_at: string | null
   created_at: string
 }
@@ -36,6 +37,7 @@ const toHabit = (r: HabitRow): Habit => ({
   difficulty: r.difficulty,
   sortOrder: r.sort_order,
   priority: r.priority,
+  schedule: r.schedule ?? [],
   archivedAt: r.archived_at,
   createdAt: r.created_at,
 })
@@ -55,11 +57,12 @@ function patchToRow(p: HabitPatch): Partial<HabitRow> {
   if (p.difficulty !== undefined) row.difficulty = p.difficulty
   if (p.sortOrder !== undefined) row.sort_order = p.sortOrder
   if (p.priority !== undefined) row.priority = p.priority
+  if (p.schedule !== undefined) row.schedule = p.schedule
   if (p.archivedAt !== undefined) row.archived_at = p.archivedAt
   return row
 }
 
-const HABIT_COLS = 'id,title,icon,difficulty,sort_order,priority,archived_at,created_at'
+const HABIT_COLS = 'id,title,icon,difficulty,sort_order,priority,schedule,archived_at,created_at'
 const COMPLETION_COLS = 'id,habit_id,completed_on,xp_earned,completed_at'
 const PAGE = 1000 // PostgREST's default max rows per request
 
@@ -79,6 +82,7 @@ export function createSupabaseRepo(client: SupabaseClient): Repo {
           icon: input.icon,
           difficulty: input.difficulty,
           priority: input.priority,
+          schedule: input.schedule,
           sort_order: Date.now() % 1_000_000_000,
         })
         .select(HABIT_COLS)

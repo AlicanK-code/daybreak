@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Flag, PowerOff, Trash2 } from 'lucide-react'
+import { EVERY_DAY, scheduleLabel, scheduleOn, withSchedule } from '../game/schedule'
 import { BASE_XP } from '../game/xp'
 import type { Difficulty, Habit, NewHabit } from '../lib/types'
 
@@ -11,8 +12,20 @@ const DIFFICULTIES: { id: Difficulty; label: string; hint: string }[] = [
   { id: 'hard', label: 'Hard', hint: 'A real grind' },
 ]
 
+const WEEKDAYS = [
+  { label: 'M', name: 'Monday' },
+  { label: 'T', name: 'Tuesday' },
+  { label: 'W', name: 'Wednesday' },
+  { label: 'T', name: 'Thursday' },
+  { label: 'F', name: 'Friday' },
+  { label: 'S', name: 'Saturday' },
+  { label: 'S', name: 'Sunday' },
+]
+
 interface Props {
   initial?: Habit
+  /** today's day key: a schedule change applies from today on */
+  today: string
   busy?: boolean
   onSubmit: (h: NewHabit) => void
   /** switch the habit off: hidden from Today until switched back on */
@@ -20,17 +33,22 @@ interface Props {
   onDelete?: () => void
 }
 
-export function HabitForm({ initial, busy, onSubmit, onTurnOff, onDelete }: Props) {
+export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [icon, setIcon] = useState(initial?.icon ?? ICONS[0])
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
   const [priority, setPriority] = useState(initial?.priority ?? false)
+  const startDays = initial ? scheduleOn(initial, today) : EVERY_DAY
+  const [days, setDays] = useState<readonly number[]>(startDays)
+  const scheduleChanged = scheduleLabel(days) !== scheduleLabel(startDays)
+  // At least one day has to stay selected.
+  const toggleDay = (d: number) => setDays((ds) => (ds.includes(d) ? (ds.length > 1 ? ds.filter((x) => x !== d) : ds) : [...ds, d]))
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function submit(e: FormEvent) {
     e.preventDefault()
     const t = title.trim()
-    if (t) onSubmit({ title: t, icon, difficulty, priority })
+    if (t) onSubmit({ title: t, icon, difficulty, priority, schedule: withSchedule(initial?.schedule ?? [], days, today) })
   }
 
   return (
@@ -84,6 +102,35 @@ export function HabitForm({ initial, busy, onSubmit, onTurnOff, onDelete }: Prop
           ))}
         </div>
         <p className="mt-2 text-xs text-faint">Streaks boost XP by +5% per day, up to +50%.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend className="mb-1.5 flex w-full items-baseline justify-between gap-2 text-sm font-medium text-muted">
+          Repeat on <span className="text-xs font-semibold text-primary-soft">{scheduleLabel(days)}</span>
+        </legend>
+        <div className="grid grid-cols-7 gap-1.5">
+          {WEEKDAYS.map((w, d) => {
+            const on = days.includes(d)
+            return (
+              <button
+                key={w.name}
+                type="button"
+                onClick={() => toggleDay(d)}
+                aria-pressed={on}
+                aria-label={w.name}
+                title={on && days.length === 1 ? 'Pick another day first' : w.name}
+                className={`grid aspect-square place-items-center rounded-full border text-sm font-bold transition ${on ? 'border-primary bg-primary/25 text-ink' : 'border-line text-faint hover:border-faint hover:text-muted'}`}
+              >
+                {w.label}
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-2 text-xs text-faint">
+          {initial && scheduleChanged
+            ? 'Applies from today. Past days keep their old schedule, so your streak is safe.'
+            : 'Streaks only count the days a habit is due.'}
+        </p>
       </fieldset>
 
       <button

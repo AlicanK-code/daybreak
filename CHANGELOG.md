@@ -11,6 +11,19 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **Custom schedules**: choose which weekdays a habit repeats on (e.g. Mon, Wed, Fri) with the new
+  "Repeat on" day picker. Streaks and the streak XP bonus only count the days a habit is due, so a
+  rest day no longer breaks them, and your day streak skips days when nothing was due.
+- Habits that aren't due today move into a collapsible **Not today** list. You can still do one as
+  an extra: it earns XP but doesn't change its streak, and shows as "Extra" in the day overview.
+- Changing a schedule applies from today on. Past days keep the schedule they had, so a change
+  never turns old days into misses.
+- Perfect days, missed habits, filling in past days and completion rates all follow the schedule.
+  The demo's workout habit is now on Mon, Wed and Fri.
+- Needs a database update: run `supabase/migrations/20261001000000_habit_schedule.sql`.
+
 ## [0.14.0] - 2026-09-30
 
 ### UI & design

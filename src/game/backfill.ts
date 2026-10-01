@@ -1,6 +1,7 @@
 import { dayDiff } from '../lib/dates'
 import type { Completion, Habit } from '../lib/types'
 import { isActiveOn } from './days'
+import { isScheduledOn } from './schedule'
 import { streakBefore } from './streaks'
 import { xpForCompletion } from './xp'
 
@@ -16,7 +17,10 @@ export function isEditableDay(day: string, today: string): boolean {
   return ago >= 0 && ago <= EDIT_WINDOW_DAYS
 }
 
-/** A habit can be changed on a day that's in the window and that the habit existed on. */
+/**
+ * A habit can be changed on a day that's in the window and that the habit existed on. (Only due days
+ * are offered for filling in, but an extra done on an off day can still be undone.)
+ */
 export function canEditHabitOn(habit: Habit, day: string, today: string): boolean {
   return isEditableDay(day, today) && isActiveOn(habit, day)
 }
@@ -27,5 +31,5 @@ export function canEditHabitOn(habit: Habit, day: string, today: string): boolea
  */
 export function xpForDay(habit: Habit, completions: Completion[], day: string): number {
   const days = new Set(completions.filter((c) => c.habitId === habit.id && c.completedOn !== day).map((c) => c.completedOn))
-  return xpForCompletion(habit.difficulty, streakBefore(days, day))
+  return xpForCompletion(habit.difficulty, streakBefore(days, day, (d) => isScheduledOn(habit, d)))
 }
