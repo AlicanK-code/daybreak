@@ -4,11 +4,18 @@
 
 # Daybreak
 
+[![CI](https://github.com/AlicanK-code/daybreak/actions/workflows/ci.yml/badge.svg)](https://github.com/AlicanK-code/daybreak/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
 *Formerly QuestLog.*
 
 **A gamified daily habit tracker with a fiery look.** Complete habits to earn XP, level up, keep streaks alive and unlock trophies, with confetti, sound effects and a level-up fanfare to make each tick feel rewarding.
 
 **Try it:** [daybreak-pearl.vercel.app](https://daybreak-pearl.vercel.app). Click **Try the demo** to play without an account.
+
+<p align="center">
+  <img src="docs/levelup.gif" alt="Ticking off a habit on a phone: confetti, the XP bar fills, and the level-up dialog appears with a trophy" width="280" />
+</p>
 
 <p>
   <img src="docs/today.png" alt="Today view: habits with streaks, priority labels and a Mon, Wed, Fri schedule" width="520" />
@@ -19,6 +26,15 @@
   <img src="docs/stats.png" alt="Stats view with XP chart, activity heatmap and completion rates" width="520" />
   <img src="docs/trophies.png" alt="Trophy cabinet on a phone" width="200" />
 </p>
+
+## Engineering highlights
+
+- **Progress is derived, never stored.** XP totals, levels, streaks and trophies are calculated from the list of completions by one pure function (`computeProgress`). Nothing can drift out of sync, and changing a game rule needs no data migration. The one stored number is the XP each completion earned, because the streak bonus depends on the streak at that moment, and recalculating it later would rewrite history.
+- **Schedules that don't rewrite the past.** Each habit keeps a short history of its schedules (when each started and which weekdays it covers). Changing Mon/Wed/Fri to daily applies from today on, so last Tuesday never turns into a miss. Streaks walk back over due days only, skipping days off.
+- **Optimistic UI with rollback.** Ticking a habit updates the screen and starts the celebration immediately. If the server rejects the write, TanStack Query restores the previous state and a toast explains what happened.
+- **One UI, two backends.** The UI only talks to a `Repo` interface. Supabase (Postgres with owner-only Row Level Security) is one implementation; demo mode is another, in `localStorage`, seeded with a deterministic month of history so every visitor sees the same story.
+- **Installable and offline.** A Workbox service worker precaches the app shell, so it installs on phones and desktops and opens without a connection.
+- **Tested and released properly.** 100 unit tests cover the game rules and helpers, including daylight-saving changes and schedule edits. CI runs lint, type checks, tests and a build on every push, and every change is recorded in the [changelog](CHANGELOG.md) with tagged releases.
 
 ## Features
 
@@ -77,14 +93,7 @@ src/
 supabase/migrations/  # SQL schema + RLS policies
 ```
 
-**Design decisions:**
-
-- **Completions are the single source of truth.** XP totals, levels, streaks and trophies are *derived* by a pure function (`computeProgress`), not stored as counters. They can't drift out of sync, and changing a game rule doesn't need a data migration.
-- **XP is stored per completion.** The streak bonus depends on the streak at the moment you complete a habit. Recomputing it later would rewrite history.
-- **Schedules keep their history.** Each habit stores when each schedule started, so changing one applies from today on and never turns past days into misses.
-- **Repository pattern.** The UI talks to a `Repo` interface. Supabase and demo mode are two implementations of it, so adding another backend means one new file.
-- **Optimistic updates.** Ticking a habit updates the UI and starts the celebration straight away. If the server rejects the write, the change is rolled back and you see a toast.
-- **Dates are local calendar days** (`YYYY-MM-DD`). Date maths is done at noon UTC, so DST changes can't break a streak (this is tested).
+**Dates are local calendar days** (`YYYY-MM-DD`). Date maths is done at noon UTC, so a clock change can't break a streak.
 
 ## Getting started
 
@@ -149,3 +158,11 @@ Open http://localhost:5173 and click **Try the demo**.
 - [x] Installable app (PWA)
 - [ ] Reminder notifications
 - [x] Drag-to-reorder habits
+
+## How it was built
+
+Built with [Claude Code](https://claude.com/claude-code) as an AI pair programmer; I directed the product, design and architecture decisions. [`CLAUDE.md`](CLAUDE.md) is the project guide it works from: the stack, the architecture rules and the release process.
+
+## License
+
+[MIT](LICENSE)
