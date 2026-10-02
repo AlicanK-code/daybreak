@@ -11,6 +11,13 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Fixes
+
+- Security hardening: the site now sends a strict Content Security Policy (scripts, styles, fonts
+  and connections are only allowed from the app itself, Google Fonts and its Supabase project) and
+  refuses to be embedded in other sites. It also stops browsers guessing file types and limits the
+  referrer and browser features it can use. Nothing changes in how the app looks or works.
+
 ## [0.16.0] - 2026-10-02
 
 ### UI & design
