@@ -40,6 +40,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - Any new feature that touches data must work in **both** Repo implementations.
 - Celebrations must respect `prefers-reduced-motion` and the mute toggle.
 - Tables must have RLS enabled, with owner-only policies.
+- `vercel.json` sets a strict Content Security Policy: the app may only load from itself, Google Fonts and its Supabase project (confetti also needs `blob:` workers). Anything new from another origin (a script, font, image, API or analytics) must be added to the matching directive there, or the browser blocks it silently in production. The dev server doesn't send these headers, so test with a production build.
 
 ## Game rules (current)
 - Base XP: easy 10, medium 20, hard 35.
