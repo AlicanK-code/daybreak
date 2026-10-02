@@ -29,7 +29,7 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-di
 export function DayOverview({ day, today, habits, completions, onClose }: Props) {
   const title = day ? formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' }) : ''
   return (
-    <Modal open={day !== null} onClose={onClose} centered title={day === today ? `Today · ${title}` : title}>
+    <Modal open={day !== null} onClose={onClose} title={day === today ? `Today · ${title}` : title}>
       {day && <DayOverviewBody day={day} today={today} habits={habits} completions={completions} />}
     </Modal>
   )

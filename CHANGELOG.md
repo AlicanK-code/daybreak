@@ -11,6 +11,18 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### UI & design
+
+- The level-up dialog matches the fire theme: the same ember panel as the player card, with soft
+  sun rays slowly turning behind the new flame and a warm glow that breathes. It replaces the old
+  gold sweep, which showed a hard diagonal edge as it turned.
+
+### Fixes
+
+- The habit form no longer runs off the bottom of the screen on phones. All pop-ups now float in
+  the middle of the screen, the form is more compact on small screens so it fits without
+  scrolling, and editing a habit no longer pops up the keyboard straight away.
+
 ## [0.15.0] - 2026-10-01
 
 ### Features
