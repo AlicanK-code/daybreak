@@ -87,24 +87,21 @@ export function LevelUpModal({ level, title, onClose }: { level: number | null; 
           aria-labelledby="levelup-title"
         >
           <motion.div
-            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-xp/40 bg-surface p-8 text-center shadow-2xl shadow-xp/20"
+            className="sun-card relative w-full max-w-sm overflow-hidden rounded-3xl border border-sun-crimson/50 p-8 text-center"
             initial={{ scale: 0.5, y: 40 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <motion.div
-              aria-hidden
-              className="absolute inset-0 -z-0 opacity-40"
-              style={{ background: 'conic-gradient(from 0deg, transparent, rgb(251 191 36 / 0.35), transparent 30%)' }}
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
-            />
             <div className="relative">
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-xp">Level up!</p>
               {/* The new flame badge, rising up from its base with a bounce */}
-              <div className="my-5 flex items-end justify-center" style={{ height: levelFlame(level).height * LEVEL_UP_SCALE }}>
+              <div className="relative my-5 flex items-end justify-center" style={{ height: levelFlame(level).height * LEVEL_UP_SCALE }}>
+                {/* Sun rays turning slowly behind the flame, over a breathing ember glow. Both fade out
+                    well before the card's edges. */}
+                <div aria-hidden className="levelup-glow" />
+                <div aria-hidden className="levelup-rays" />
                 <motion.div
                   className="origin-bottom"
                   initial={{ scale: 0, y: 20 }}
