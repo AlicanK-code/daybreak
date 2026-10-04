@@ -56,7 +56,7 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3.5 sm:space-y-5">
+    <form onSubmit={submit} className="space-y-3.5 roomy:space-y-5">
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-muted">Habit</span>
         <input
@@ -97,11 +97,11 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
               type="button"
               onClick={() => setDifficulty(d.id)}
               aria-pressed={difficulty === d.id}
-              className={`rounded-xl border p-2 text-left transition sm:p-2.5 ${difficulty === d.id ? 'border-primary bg-primary/15' : 'border-line hover:border-faint'}`}
+              className={`rounded-xl border p-2 text-left transition roomy:p-2.5 ${difficulty === d.id ? 'border-primary bg-primary/15' : 'border-line hover:border-faint'}`}
             >
               <span className="block font-semibold">{d.label}</span>
-              <span className="hidden text-xs text-muted sm:block">{d.hint}</span>
-              <span className="block text-sm font-bold text-xp sm:mt-1">+{BASE_XP[d.id]} XP</span>
+              <span className="hidden text-xs text-muted roomy:block">{d.hint}</span>
+              <span className="block text-sm font-bold text-xp roomy:mt-1">+{BASE_XP[d.id]} XP</span>
             </button>
           ))}
         </div>
@@ -122,14 +122,14 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
                 aria-pressed={on}
                 aria-label={w.name}
                 title={on && days.length === 1 ? 'Pick another day first' : w.name}
-                className={`grid h-10 place-items-center rounded-full border text-sm font-bold transition sm:h-11 ${on ? 'border-primary bg-primary/25 text-ink' : 'border-line text-faint hover:border-faint hover:text-muted'}`}
+                className={`grid h-10 place-items-center rounded-full border text-sm font-bold transition roomy:h-11 ${on ? 'border-primary bg-primary/25 text-ink' : 'border-line text-faint hover:border-faint hover:text-muted'}`}
               >
                 {w.label}
               </button>
             )
           })}
         </div>
-        <p className={`mt-2 text-xs text-faint ${initial && scheduleChanged ? '' : 'hidden sm:block'}`}>
+        <p className={`mt-2 text-xs text-faint ${initial && scheduleChanged ? '' : 'hidden roomy:block'}`}>
           {initial && scheduleChanged
             ? 'Applies from today. Past days keep their old schedule, so your streak is safe.'
             : 'Streaks count the days a habit is due, and add +5% XP per day, up to +50%.'}
@@ -141,12 +141,12 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
         role="switch"
         aria-checked={priority}
         onClick={() => setPriority((p) => !p)}
-        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition sm:py-3 ${priority ? 'border-sun-blaze-orange/60 bg-sun-crimson/15' : 'border-line hover:border-faint'}`}
+        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition roomy:py-3 ${priority ? 'border-sun-blaze-orange/60 bg-sun-crimson/15' : 'border-line hover:border-faint'}`}
       >
         <Flag size={18} className={priority ? 'fill-sun-blaze-orange/50 text-sun-blaze-orange' : 'text-muted'} />
         <span className="flex-1">
           <span className="block font-semibold">Priority</span>
-          <span className="hidden text-xs text-muted sm:block">Label this habit as important</span>
+          <span className="hidden text-xs text-muted roomy:block">Label this habit as important</span>
         </span>
         <span className={`relative h-6 w-10 rounded-full transition ${priority ? 'bg-sun-blaze-orange' : 'bg-surface-2'}`} aria-hidden>
           <span className={`absolute top-0.5 size-5 rounded-full bg-ink shadow transition-all ${priority ? 'left-[18px]' : 'left-0.5'}`} />
@@ -155,13 +155,13 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
 
       <button
         disabled={busy || !title.trim()}
-        className="w-full rounded-xl bg-primary py-2.5 font-semibold sm:py-3 text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-xl bg-primary py-2.5 font-semibold roomy:py-3 text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
       >
         {initial ? 'Save changes' : 'Add habit'}
       </button>
 
       {initial && (
-        <div className="flex gap-2 border-t border-line pt-3 sm:pt-4">
+        <div className="flex gap-2 border-t border-line pt-3 roomy:pt-4">
           {onTurnOff && (
             <button type="button" onClick={onTurnOff} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line py-2 text-sm text-muted hover:text-ink">
               <PowerOff size={16} /> Turn off

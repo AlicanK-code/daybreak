@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Screens with room to spare: wide and tall. The habit form only spreads out (taglines, hints and
+   looser spacing) here; anywhere smaller it stays compact so it fits without scrolling, including
+   short laptop windows, not just phones. */
+@custom-variant roomy (@media (min-width: 40rem) and (min-height: 54rem));
+
 @theme {
   --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 

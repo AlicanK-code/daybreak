@@ -11,7 +11,7 @@ A gamified daily habit tracker. It's a portfolio piece that the owner also uses 
 - TanStack Query for server state
 - Supabase (Auth + Postgres + Row Level Security)
 - Recharts (lazy-loaded in the Stats tab)
-- Vitest for tests, oxlint for linting, GitHub Actions for CI
+- Vitest for unit tests, Playwright for end-to-end smoke tests, oxlint for linting, GitHub Actions for CI
 
 ## Commands
 - `npm run dev`: start the dev server (http://localhost:5173)
@@ -19,8 +19,9 @@ A gamified daily habit tracker. It's a portfolio piece that the owner also uses 
 - `npm run lint`: lint with oxlint
 - `npm run typecheck`: `tsc -b`
 - `npm run build`: production build
+- `npm run e2e`: build, then run the Playwright smoke tests (`e2e/`) in the installed Chrome
 
-Before saying a change is done, run lint, typecheck, test and build. They must all pass, because CI runs the same four.
+Before saying a change is done, run lint, typecheck, test and build. They must all pass, because CI runs the same four. For UI changes, also run `npm run e2e`; CI runs it too. The smoke tests serve the production build with the headers from `vercel.json`, fix the clock to a Thursday afternoon, and fail on any console error or CSP violation.
 
 ## Architecture
 - `src/game/`: the **pure** game engine (XP, levels, streaks, badges, stats), with no React or I/O. Every rule change needs a test in `game.test.ts`.

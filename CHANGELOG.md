@@ -11,6 +11,12 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Fixes
+
+- The habit form now also stays compact in short laptop windows (e.g. 1280×720), not just on
+  phones, so editing a habit fits without scrolling. The roomier layout is kept for screens that
+  are both wide and tall.
+
 ## [0.16.1] - 2026-10-04
 
 ### Fixes
