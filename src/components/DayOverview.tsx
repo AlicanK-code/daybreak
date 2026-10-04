@@ -7,7 +7,7 @@ import { dayOverview } from '../game/stats'
 import { formatDay, toDayKey } from '../lib/dates'
 import { DIFF_STYLE } from '../lib/difficulty'
 import { playComplete, playUndo } from '../lib/sound'
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 import { Modal } from './Modal'
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   today: string
   habits: Habit[]
   completions: Completion[]
+  tasks: Task[]
   onClose: () => void
 }
 
@@ -26,17 +27,17 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-di
  * last week, each habit can be switched between done and not done, so a forgotten tick can be
  * filled in.
  */
-export function DayOverview({ day, today, habits, completions, onClose }: Props) {
+export function DayOverview({ day, today, habits, completions, tasks, onClose }: Props) {
   const title = day ? formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' }) : ''
   return (
     <Modal open={day !== null} onClose={onClose} title={day === today ? `Today · ${title}` : title}>
-      {day && <DayOverviewBody day={day} today={today} habits={habits} completions={completions} />}
+      {day && <DayOverviewBody day={day} today={today} habits={habits} completions={completions} tasks={tasks} />}
     </Modal>
   )
 }
 
-function DayOverviewBody({ day, today, habits, completions }: { day: string; today: string; habits: Habit[]; completions: Completion[] }) {
-  const o = useMemo(() => dayOverview(habits, completions, day), [habits, completions, day])
+function DayOverviewBody({ day, today, habits, completions, tasks }: Omit<Props, 'day' | 'onClose'> & { day: string }) {
+  const o = useMemo(() => dayOverview(habits, completions, day, tasks), [habits, completions, day, tasks])
   const toggle = useToggleCompletion()
   const [error, setError] = useState<string | null>(null)
   const isToday = day === today
@@ -58,17 +59,24 @@ function DayOverviewBody({ day, today, habits, completions }: { day: string; tod
     toggle.mutate({ type: 'remove', habitId: habit.id, day }, { onError: () => setError(`Couldn't undo ${habit.title}. Try again.`) })
   }
 
-  if (o.total === 0) {
+  if (o.total === 0 && o.tasks.length === 0) {
     return <p className="py-4 text-center text-sm text-muted">No habits were due on this day.</p>
   }
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="rounded-full bg-surface-2 px-3 py-1 font-semibold">
-          <span className={o.done.length ? 'text-done' : 'text-muted'}>{o.done.length}</span>
-          <span className="text-muted"> / {o.total} done</span>
-        </span>
+        {o.total > 0 && (
+          <span className="rounded-full bg-surface-2 px-3 py-1 font-semibold">
+            <span className={o.done.length ? 'text-done' : 'text-muted'}>{o.done.length}</span>
+            <span className="text-muted"> / {o.total} done</span>
+          </span>
+        )}
+        {o.tasks.length > 0 && (
+          <span className="rounded-full bg-surface-2 px-3 py-1 font-semibold text-muted">
+            {o.tasks.length} task{o.tasks.length === 1 ? '' : 's'}
+          </span>
+        )}
         <span className="rounded-full bg-xp/15 px-3 py-1 font-semibold text-xp">+{o.xp} XP</span>
         {o.perfect && (
           <span className="flex items-center gap-1 rounded-full border border-sun-blaze-orange/40 bg-sun-crimson/15 px-3 py-1 font-semibold text-sun-blaze-orange">
@@ -124,6 +132,30 @@ function DayOverviewBody({ day, today, habits, completions }: { day: string; tod
                 </li>
               )
             })}
+          </ul>
+        </section>
+      )}
+
+      {o.tasks.length > 0 && (
+        <section aria-label="Tasks done">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Tasks done</h3>
+          <ul className="space-y-1.5">
+            {o.tasks.map((task) => (
+              <li key={task.id} className="flex items-center gap-3 rounded-xl border border-done/30 bg-done/[0.07] p-2.5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-done/15 text-lg" aria-hidden>
+                  {task.icon}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{task.title}</p>
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
+                    <span className="rounded-full border border-line px-1.5 py-px text-faint">Task</span>
+                    {task.completedAt && <span>at {time(task.completedAt)}</span>}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-xp">+{task.xpEarned} XP</span>
+                <Check size={18} strokeWidth={3} className="shrink-0 text-done" aria-label="Done" />
+              </li>
+            ))}
           </ul>
         </section>
       )}

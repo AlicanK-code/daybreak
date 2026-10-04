@@ -1,4 +1,4 @@
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 import { isBackfilled } from './days'
 import { isDueOn, isScheduledOn } from './schedule'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
@@ -32,16 +32,21 @@ export interface Progress {
   todayDone: number
   /** habits due today */
   todayTotal: number
+  /** XP from habits and tasks done today */
   xpToday: number
+  /** one-off tasks ticked off, ever */
+  tasksDone: number
   habits: Map<string, HabitProgress>
 }
 
 
 /**
  * Derives every game number (XP, level, streaks, achievements inputs) from raw
- * habits + completions. Pure: same input, same output — easy to test and cache.
+ * habits + completions, plus finished one-off tasks. Pure: same input, same output — easy to test
+ * and cache. Tasks only add XP (and their own count): streaks, perfect days and today's habit total
+ * are about habits alone.
  */
-export function computeProgress(habits: Habit[], completions: Completion[], today: string): Progress {
+export function computeProgress(habits: Habit[], completions: Completion[], today: string, tasks: Task[] = []): Progress {
   const byHabit = new Map<string, Set<string>>()
   const byDay = new Map<string, Set<string>>()
   const difficultyById = new Map(habits.map((h) => [h.id, h.difficulty]))
@@ -66,6 +71,14 @@ export function computeProgress(habits: Habit[], completions: Completion[], toda
     byHabit.get(c.habitId)!.add(c.completedOn)
     if (!byDay.has(c.completedOn)) byDay.set(c.completedOn, new Set())
     byDay.get(c.completedOn)!.add(c.habitId)
+  }
+
+  let tasksDone = 0
+  for (const t of tasks) {
+    if (!t.completedOn) continue
+    tasksDone++
+    totalXp += t.xpEarned
+    if (t.completedOn === today) xpToday += t.xpEarned
   }
 
   const activeHabits = habits.filter((h) => !h.archivedAt)
@@ -114,6 +127,7 @@ export function computeProgress(habits: Habit[], completions: Completion[], toda
     todayDone,
     todayTotal: dueToday.length,
     xpToday,
+    tasksDone,
     habits: habitProgress,
   }
 }

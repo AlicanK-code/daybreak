@@ -11,6 +11,20 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### Features
+
+- **One-off tasks** alongside your habits, for things you only do once ("Book the dentist"). Add one
+  with the new Habit / Task switch in the "New habit or task" form, and give it a difficulty and an
+  optional due date: today, tomorrow, a date you pick (from today up to five years ahead), or none.
+- Today shows a **Tasks** list below your habits: overdue tasks first (with how late they are), then
+  those due today and undated ones. Tasks due later wait in a collapsible **Upcoming tasks** list.
+- Ticking a task off earns its difficulty's XP (10, 20 or 35) with confetti, and counts towards your
+  level and the XP chart. Tasks never affect streaks, perfect days or today's habit total, and
+  there's no penalty for running late. Finished tasks stay ticked for the rest of the day (so you
+  can undo a mis-tap) and show in that day's overview.
+- The demo now has a few sample tasks.
+- Needs a database update: run `supabase/migrations/20261004000000_tasks.sql`.
+
 ### Fixes
 
 - The habit form now also stays compact in short laptop windows (e.g. 1280×720), not just on

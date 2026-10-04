@@ -3,6 +3,7 @@ import { test as base, expect, type Page } from '@playwright/test'
 interface DemoState {
   habits: { id: string; title: string }[]
   completions: { habitId: string; completedOn: string; xpEarned: number }[]
+  tasks: { xpEarned: number }[]
 }
 
 // A Thursday afternoon: the demo's Mon/Wed/Fri workout isn't due, so 4 of its 5 habits are.
@@ -47,7 +48,8 @@ async function editDemoData(page: Page, change: (state: DemoState) => void) {
 
 test('opens the demo with only the habits due today', async ({ page }) => {
   await openDemo(page)
-  await expect(page.getByRole('button', { name: /^Complete / })).toHaveCount(4)
+  // Habit buttons only ("Complete task …" ones are tasks).
+  await expect(page.getByRole('button', { name: /^Complete (?!task )/ })).toHaveCount(4)
   await expect(page.getByRole('button', { name: /^Complete Morning workout/ })).toHaveCount(0)
 
   await page.getByRole('button', { name: /Not today/ }).click()
@@ -66,7 +68,7 @@ test('completes and undoes a habit', async ({ page }) => {
 
 test('adds a habit on a schedule that skips today', async ({ page }) => {
   await openDemo(page)
-  await page.getByRole('button', { name: 'New habit' }).click()
+  await page.getByRole('button', { name: 'New habit or task' }).click()
   const dialog = page.getByRole('dialog', { name: 'New habit' })
   await dialog.getByPlaceholder('e.g. Read 20 pages').fill('Stretch')
   await dialog.getByRole('button', { name: 'Thursday' }).click()
@@ -96,6 +98,54 @@ async function expectEditDialogFits(page: Page) {
   await expect(dialog.getByPlaceholder('e.g. Read 20 pages')).not.toBeFocused()
 }
 
+test('adds a one-off task and ticks it off for XP, without touching the habit total', async ({ page }) => {
+  await openDemo(page)
+  const tasks = page.getByRole('region', { name: 'Tasks' })
+  // The demo's overdue task is listed first, with how late it is.
+  await expect(tasks.getByText('2 days late')).toBeVisible()
+
+  await page.getByRole('button', { name: 'New habit or task' }).click()
+  await page.getByRole('radio', { name: /Task/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'New task' })
+  await dialog.getByPlaceholder(/dentist/).fill('Post the parcel')
+  await dialog.getByRole('button', { name: 'Add task' }).click()
+  await expect(dialog).toBeHidden()
+
+  await tasks.getByRole('button', { name: /^Complete task Post the parcel for 10 XP/ }).click()
+  await expect(tasks.getByRole('button', { name: 'Undo Post the parcel' })).toBeVisible()
+  await expect(page.getByText('+10 XP earned today')).toBeVisible()
+  await expect(page.getByRole('img', { name: '0 of 4 habits done today' })).toBeVisible()
+
+  // A task for later goes under "Upcoming tasks", not today's list.
+  await page.getByRole('button', { name: 'New habit or task' }).click()
+  const next = page.getByRole('dialog', { name: 'New task' }) // the form remembers it was adding tasks
+  await next.getByPlaceholder(/dentist/).fill('Pay the car tax')
+  await next.getByRole('button', { name: 'Tomorrow', exact: true }).click()
+  await next.getByRole('button', { name: 'Add task' }).click()
+  await expect(next).toBeHidden()
+  await expect(tasks.getByText('Pay the car tax')).toHaveCount(0)
+  await page.getByRole('button', { name: /Upcoming tasks/ }).click()
+  await expect(page.getByText('Pay the car tax')).toBeVisible()
+})
+
+test("won't set a task's due date in the past", async ({ page }) => {
+  await openDemo(page)
+  await page.getByRole('button', { name: 'Edit Fix the bike' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Edit task' })
+  await dialog.getByRole('button', { name: 'Pick date' }).click()
+  const date = dialog.getByLabel('Due date')
+  await date.fill('2025-03-05')
+  await expect(dialog.getByRole('alert')).toHaveText('Pick today or a later date.')
+  await expect(dialog.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+
+  await date.fill('2026-10-01')
+  await expect(dialog.getByRole('alert')).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'Save changes' }).click()
+  await expect(dialog).toBeHidden()
+  await page.getByRole('button', { name: /Upcoming tasks/ }).click()
+  await expect(page.getByText('Thu 1 Oct')).toBeVisible()
+})
+
 test('fits the edit dialog on screen without scrolling', async ({ page }) => {
   await expectEditDialogFits(page)
 })
@@ -113,7 +163,7 @@ test('celebrates a level-up', async ({ page }) => {
   await openDemo(page)
   // Bring the demo to just short of level 10, so the next tick crosses it.
   await editDemoData(page, (state) => {
-    const total = state.completions.reduce((s, c) => s + c.xpEarned, 0)
+    const total = [...state.completions, ...state.tasks].reduce((s, c) => s + c.xpEarned, 0)
     state.completions[0].xpEarned += Math.round(60 * Math.pow(9, 1.8)) - total - 5
   })
   await page.getByRole('button', { name: /^Complete Read 20 pages/ }).click()
