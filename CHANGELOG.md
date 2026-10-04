@@ -11,6 +11,8 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-04
+
 ### Features
 
 - **One-off tasks** alongside your habits, for things you only do once ("Book the dentist"). Add one
@@ -260,7 +262,8 @@ The first version of QuestLog, a gamified daily habit tracker.
 - **Accounts** with Supabase (email sign-in, with each user's data private to them), plus a
   **demo mode** that needs no account.
 
-[Unreleased]: https://github.com/AlicanK-code/daybreak/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/AlicanK-code/daybreak/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/AlicanK-code/daybreak/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/AlicanK-code/daybreak/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/AlicanK-code/daybreak/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/AlicanK-code/daybreak/compare/v0.14.0...v0.15.0
