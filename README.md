@@ -34,7 +34,7 @@
 - **Optimistic UI with rollback.** Ticking a habit updates the screen and starts the celebration immediately. If the server rejects the write, TanStack Query restores the previous state and a toast explains what happened.
 - **One UI, two backends.** The UI only talks to a `Repo` interface. Supabase (Postgres with owner-only Row Level Security) is one implementation; demo mode is another, in `localStorage`, seeded with a deterministic month of history so every visitor sees the same story.
 - **Installable and offline.** A Workbox service worker precaches the app shell, so it installs on phones and desktops and opens without a connection.
-- **Tested and released properly.** 100 unit tests cover the game rules and helpers, including daylight-saving changes and schedule edits. CI runs lint, type checks, tests and a build on every push, and every change is recorded in the [changelog](CHANGELOG.md) with tagged releases.
+- **Tested and released properly.** 100 unit tests cover the game rules and helpers, including daylight-saving changes and schedule edits. Playwright smoke tests drive the real production build on desktop and phone sizes, under the live security headers, and fail on any console error or blocked resource. CI runs all of it on every push, and every change is recorded in the [changelog](CHANGELOG.md) with tagged releases.
 
 ## Features
 
@@ -74,7 +74,7 @@ All changes are listed in the [changelog](CHANGELOG.md).
 | Backend | Supabase (Postgres + Auth + RLS) |
 | Charts | Recharts (lazy-loaded) |
 | App install / offline | vite-plugin-pwa (Workbox) |
-| Testing / CI | Vitest, oxlint, GitHub Actions |
+| Testing / CI | Vitest, Playwright, oxlint, GitHub Actions |
 | Hosting | Vercel |
 
 ## Architecture
@@ -130,6 +130,7 @@ Open http://localhost:5173 and click **Try the demo**.
 |---|---|
 | `npm run dev` | Start the dev server |
 | `npm test` | Run the unit tests |
+| `npm run e2e` | Build, then run the end-to-end smoke tests (Playwright, in your installed Chrome) |
 | `npm run lint` | Lint with oxlint |
 | `npm run typecheck` | Check types |
 | `npm run build` | Production build to `dist/` |
