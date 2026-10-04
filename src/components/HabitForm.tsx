@@ -1,16 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { Flag, PowerOff, Trash2 } from 'lucide-react'
+import { Flag, PowerOff } from 'lucide-react'
 import { EVERY_DAY, scheduleLabel, scheduleOn, withSchedule } from '../game/schedule'
-import { BASE_XP } from '../game/xp'
 import type { Difficulty, Habit, NewHabit } from '../lib/types'
-
-const ICONS = ['⭐', '🏋️', '🏃', '🧘', '📚', '✍️', '💻', '🧠', '💧', '🥗', '😴', '🧹', '💰', '🎸', '🌱', '🗺️', '📵', '🙏', '💊', '🐕']
-
-const DIFFICULTIES: { id: Difficulty; label: string; hint: string }[] = [
-  { id: 'easy', label: 'Easy', hint: 'Quick win' },
-  { id: 'medium', label: 'Medium', hint: 'Takes effort' },
-  { id: 'hard', label: 'Hard', hint: 'A real grind' },
-]
+import { ICONS } from '../lib/icons'
+import { DeleteButton, DifficultyPicker, IconPicker, SubmitButton, TitleField } from './FormParts'
 
 const WEEKDAYS = [
   { label: 'M', name: 'Monday' },
@@ -21,10 +14,6 @@ const WEEKDAYS = [
   { label: 'S', name: 'Saturday' },
   { label: 'S', name: 'Sunday' },
 ]
-
-// Jump straight into the title on devices with a mouse; on touch screens that would pop up the
-// keyboard over the form.
-const finePointer = () => typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches
 
 interface Props {
   initial?: Habit
@@ -47,7 +36,6 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
   const scheduleChanged = scheduleLabel(days) !== scheduleLabel(startDays)
   // At least one day has to stay selected.
   const toggleDay = (d: number) => setDays((ds) => (ds.includes(d) ? (ds.length > 1 ? ds.filter((x) => x !== d) : ds) : [...ds, d]))
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function submit(e: FormEvent) {
     e.preventDefault()
@@ -57,55 +45,9 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
 
   return (
     <form onSubmit={submit} className="space-y-3.5 roomy:space-y-5">
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-muted">Habit</span>
-        <input
-          autoFocus={!initial && finePointer()}
-          required
-          maxLength={80}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Read 20 pages"
-          className="w-full rounded-xl border border-line bg-bg px-3 py-2.5 outline-none focus:border-primary"
-        />
-      </label>
-
-      <fieldset>
-        <legend className="mb-1.5 text-sm font-medium text-muted">Icon</legend>
-        <div className="grid grid-cols-10 gap-1">
-          {ICONS.map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setIcon(i)}
-              aria-label={`Icon ${i}`}
-              aria-pressed={icon === i}
-              className={`grid aspect-square place-items-center rounded-lg text-xl transition ${icon === i ? 'bg-primary/25 ring-2 ring-primary' : 'hover:bg-surface-2'}`}
-            >
-              {i}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="mb-1.5 text-sm font-medium text-muted">Difficulty</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {DIFFICULTIES.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              onClick={() => setDifficulty(d.id)}
-              aria-pressed={difficulty === d.id}
-              className={`rounded-xl border p-2 text-left transition roomy:p-2.5 ${difficulty === d.id ? 'border-primary bg-primary/15' : 'border-line hover:border-faint'}`}
-            >
-              <span className="block font-semibold">{d.label}</span>
-              <span className="hidden text-xs text-muted roomy:block">{d.hint}</span>
-              <span className="block text-sm font-bold text-xp roomy:mt-1">+{BASE_XP[d.id]} XP</span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <TitleField label="Habit" placeholder="e.g. Read 20 pages" value={title} onChange={setTitle} isNew={!initial} />
+      <IconPicker value={icon} onChange={setIcon} />
+      <DifficultyPicker value={difficulty} onChange={setDifficulty} />
 
       <fieldset>
         <legend className="mb-1.5 flex w-full items-baseline justify-between gap-2 text-sm font-medium text-muted">
@@ -153,12 +95,7 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
         </span>
       </button>
 
-      <button
-        disabled={busy || !title.trim()}
-        className="w-full rounded-xl bg-primary py-2.5 font-semibold roomy:py-3 text-white transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
-      >
-        {initial ? 'Save changes' : 'Add habit'}
-      </button>
+      <SubmitButton disabled={!!busy || !title.trim()}>{initial ? 'Save changes' : 'Add habit'}</SubmitButton>
 
       {initial && (
         <div className="flex gap-2 border-t border-line pt-3 roomy:pt-4">
@@ -167,15 +104,7 @@ export function HabitForm({ initial, today, busy, onSubmit, onTurnOff, onDelete 
               <PowerOff size={16} /> Turn off
             </button>
           )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border py-2 text-sm transition ${confirmDelete ? 'border-danger bg-danger/15 text-danger' : 'border-line text-muted hover:text-danger'}`}
-            >
-              <Trash2 size={16} /> {confirmDelete ? 'Tap again — erases history' : 'Delete'}
-            </button>
-          )}
+          {onDelete && <DeleteButton onDelete={onDelete} warning="Tap again — erases history" />}
         </div>
       )}
     </form>

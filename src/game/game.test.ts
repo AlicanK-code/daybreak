@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addDays, dayDiff, lastNDays, weekday } from '../lib/dates'
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 import { BADGES, unlockedBadgeIds } from './badges'
 import { computeProgress } from './progress'
 import { completionRate, dailyTotals, dayOverview } from './stats'
@@ -8,6 +8,7 @@ import { EDIT_WINDOW_DAYS, canEditHabitOn, isEditableDay, xpForDay } from './bac
 import { isBackfilled } from './days'
 import { EVERY_DAY, isDueOn, isScheduledOn, scheduleLabel, scheduleOn, withSchedule } from './schedule'
 import { bestStreak, currentStreak, streakBefore } from './streaks'
+import { MAX_DUE_YEARS, daysLate, dueDateProblem, dueDateRange, taskStatus, todayTasks, upcomingTasks, xpForTask } from './tasks'
 import { levelInfo, xpForCompletion, xpToReachLevel } from './xp'
 
 const TODAY = '2026-09-24'
@@ -385,5 +386,102 @@ describe('schedules', () => {
     // Last 7 days (18th to 24th): due Fri, Mon, Wed. Done Fri and Mon, plus an extra on Tuesday.
     const cs = [done('gym', '2026-09-18'), done('gym', '2026-09-21'), done('gym', '2026-09-22')]
     expect(completionRate(gym(), cs, 7, TODAY)).toBeCloseTo(2 / 3)
+  })
+})
+
+describe('one-off tasks', () => {
+  // TODAY is Thursday 24 September 2026.
+  const task = (id: string, over: Partial<Task> = {}): Task => ({
+    id,
+    title: id,
+    icon: '⭐',
+    difficulty: 'medium',
+    dueOn: TODAY,
+    completedOn: null,
+    completedAt: null,
+    xpEarned: 0,
+    createdAt: '2026-09-20T09:00:00',
+    ...over,
+  })
+  const finished = (id: string, day: string, xp: number, over: Partial<Task> = {}) =>
+    task(id, { completedOn: day, completedAt: `${day}T18:00:00`, xpEarned: xp, ...over })
+
+  it('earns its base XP, with no streak bonus', () => {
+    expect(xpForTask('easy')).toBe(10)
+    expect(xpForTask('medium')).toBe(20)
+    expect(xpForTask('hard')).toBe(35)
+  })
+
+  it('knows whether a task is overdue, due today, upcoming, undated or done', () => {
+    expect(taskStatus(task('a', { dueOn: '2026-09-22' }), TODAY)).toBe('overdue')
+    expect(taskStatus(task('a'), TODAY)).toBe('today')
+    expect(taskStatus(task('a', { dueOn: '2026-09-25' }), TODAY)).toBe('upcoming')
+    expect(taskStatus(task('a', { dueOn: null }), TODAY)).toBe('someday')
+    expect(taskStatus(finished('a', '2026-09-22', 20, { dueOn: '2026-09-21' }), TODAY)).toBe('done')
+    expect(daysLate(task('a', { dueOn: '2026-09-21' }), TODAY)).toBe(3)
+    expect(daysLate(task('a'), TODAY)).toBe(0)
+    expect(daysLate(finished('a', TODAY, 20, { dueOn: '2026-09-21' }), TODAY)).toBe(0)
+  })
+
+  it('lists overdue, then due today, then undated, then those finished today; not upcoming or finished before', () => {
+    const tasks = [
+      task('someday', { dueOn: null }),
+      finished('done-today', TODAY, 20),
+      task('today'),
+      task('late-1', { dueOn: '2026-09-23' }),
+      task('late-3', { dueOn: '2026-09-21' }),
+      task('next-week', { dueOn: '2026-10-01' }),
+      finished('done-before', '2026-09-22', 20),
+    ]
+    expect(todayTasks(tasks, TODAY).map((t) => t.id)).toEqual(['late-3', 'late-1', 'today', 'someday', 'done-today'])
+    expect(upcomingTasks([...tasks, task('tomorrow', { dueOn: '2026-09-25' })], TODAY).map((t) => t.id)).toEqual(['tomorrow', 'next-week'])
+  })
+
+  it('adds task XP to the level and today, without touching habit streaks or totals', () => {
+    const habits = [habit('a')]
+    const completions = [done('a', '2026-09-23')]
+    const without = computeProgress(habits, completions, TODAY)
+    const withTasks = computeProgress(habits, completions, TODAY, [finished('t1', TODAY, 35), finished('t2', '2026-09-22', 10), task('open')])
+    expect(withTasks.level.totalXp).toBe(without.level.totalXp + 45)
+    expect(withTasks.xpToday).toBe(35)
+    expect(withTasks.tasksDone).toBe(2)
+    expect(withTasks.totalCompletions).toBe(without.totalCompletions)
+    expect(withTasks.todayTotal).toBe(1)
+    expect(withTasks.dayStreak).toBe(without.dayStreak)
+    expect(withTasks.perfectDays).toBe(without.perfectDays)
+  })
+
+  it('counts task XP in daily totals but not in the habit count', () => {
+    const rows = dailyTotals([done('a', TODAY, 20)], 2, TODAY, [finished('t', TODAY, 35)])
+    expect(rows.at(-1)).toEqual({ day: TODAY, xp: 55, count: 1 })
+  })
+
+  it('shows tasks done in the day overview, without changing done/total or perfect days', () => {
+    const o = dayOverview([habit('a')], [], TODAY, [finished('t', TODAY, 20), finished('other-day', '2026-09-22', 20)])
+    expect(o.tasks.map((t) => t.id)).toEqual(['t'])
+    expect(o.xp).toBe(20)
+    expect(o).toMatchObject({ total: 1, perfect: false })
+    expect(o.missed.map((h) => h.id)).toEqual(['a'])
+  })
+})
+
+describe('task due dates', () => {
+  it('can be set from today up to five years ahead', () => {
+    expect(dueDateProblem(TODAY, TODAY)).toBeNull()
+    expect(dueDateProblem('2026-12-25', TODAY)).toBeNull()
+    expect(dueDateProblem(null, TODAY)).toBeNull()
+    expect(dueDateProblem('2026-09-23', TODAY)).toBe('Pick today or a later date.')
+    expect(dueDateProblem('2025-03-05', TODAY)).toBe('Pick today or a later date.')
+    expect(dueDateProblem(addDays(TODAY, MAX_DUE_YEARS * 365), TODAY)).toBeNull()
+    expect(dueDateProblem(addDays(TODAY, MAX_DUE_YEARS * 365 + 1), TODAY)).toMatch(/within the next 5 years/)
+  })
+
+  it('lets an overdue task keep its own date when edited, but not move further back', () => {
+    const current = '2026-09-20'
+    expect(dueDateRange(TODAY, current).min).toBe(current)
+    expect(dueDateProblem(current, TODAY, current)).toBeNull()
+    expect(dueDateProblem('2026-09-19', TODAY, current)).toBe('Pick today or a later date.')
+    // A task due in the future can't be moved into the past.
+    expect(dueDateRange(TODAY, '2026-10-01').min).toBe(TODAY)
   })
 })

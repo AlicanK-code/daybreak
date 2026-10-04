@@ -1,7 +1,8 @@
 import { addDays, toDayKey } from '../lib/dates'
-import type { Completion, Habit, NewHabit } from '../lib/types'
+import type { Completion, Habit, NewHabit, Task } from '../lib/types'
 import { isScheduledOn } from '../game/schedule'
 import { streakBefore } from '../game/streaks'
+import { xpForTask } from '../game/tasks'
 import { xpForCompletion } from '../game/xp'
 import type { Repo } from './repo'
 
@@ -18,6 +19,7 @@ export const DEMO_DEFAULT_NAME = 'Demo Adventurer'
 interface DemoState {
   habits: Habit[]
   completions: Completion[]
+  tasks: Task[]
 }
 
 let memory: DemoState | null = null
@@ -28,8 +30,9 @@ function load(): DemoState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const state = JSON.parse(raw) as DemoState
-      // Demo data saved before habits had a priority flag or a schedule.
+      // Demo data saved before habits had a priority flag or a schedule, or before tasks existed.
       state.habits = state.habits.map((h) => ({ ...h, priority: h.priority ?? false, schedule: h.schedule ?? [] }))
+      state.tasks ??= []
       return (memory = state)
     }
   } catch {
@@ -132,7 +135,49 @@ function seed(): DemoState {
       }
     }
   })
-  return { habits, completions }
+  return { habits, completions, tasks: seedTasks(today) }
+}
+
+/** A few one-off tasks: overdue, due today, undated and upcoming, plus some finished in the past. */
+function seedTasks(today: string): Task[] {
+  const open = (title: string, icon: string, difficulty: Task['difficulty'], due: number | null, added: number): Task => ({
+    id: uid(),
+    title,
+    icon,
+    difficulty,
+    dueOn: due === null ? null : addDays(today, due),
+    completedOn: null,
+    completedAt: null,
+    xpEarned: 0,
+    createdAt: `${addDays(today, -added)}T09:00:00`,
+  })
+  const done = (title: string, icon: string, difficulty: Task['difficulty'], ago: number): Task => {
+    const day = addDays(today, -ago)
+    return {
+      ...open(title, icon, difficulty, -ago, ago + 3),
+      completedOn: day,
+      completedAt: `${day}T18:30:00`,
+      xpEarned: xpForTask(difficulty),
+    }
+  }
+  return [
+    open('Book a dentist appointment', '🦷', 'easy', -2, 6),
+    open('Renew passport', '🛂', 'medium', 0, 4),
+    open('Fix the bike', '🚲', 'hard', null, 10),
+    open('Plan the weekend trip', '🗺️', 'medium', 3, 1),
+    done('Clear out the garage', '🧹', 'hard', 5),
+    done('Call grandma', '📞', 'easy', 2),
+    done('Back up the laptop', '💻', 'medium', 9),
+  ]
+}
+
+function changeTask(id: string, patch: Partial<Task>): Task {
+  const s = load()
+  const tasks = s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t))
+  save({ ...s, tasks })
+  const task = tasks.find((t) => t.id === id)
+  if (!task) throw new Error('Task not found')
+  return task
 }
 
 const delay = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 60))
@@ -164,7 +209,7 @@ export function createDemoRepo(): Repo {
 
     async deleteHabit(id) {
       const s = load()
-      save({ habits: s.habits.filter((h) => h.id !== id), completions: s.completions.filter((c) => c.habitId !== id) })
+      save({ ...s, habits: s.habits.filter((h) => h.id !== id), completions: s.completions.filter((c) => c.habitId !== id) })
       return delay(undefined)
     },
 
@@ -185,5 +230,26 @@ export function createDemoRepo(): Repo {
       save({ ...s, completions: s.completions.filter((c) => !(c.habitId === habitId && c.completedOn === day)) })
       return delay(undefined)
     },
+
+    listTasks: () => delay([...load().tasks]),
+
+    async createTask(input) {
+      const s = load()
+      const task: Task = { ...input, id: uid(), completedOn: null, completedAt: null, xpEarned: 0, createdAt: new Date().toISOString() }
+      save({ ...s, tasks: [...s.tasks, task] })
+      return delay(task)
+    },
+
+    updateTask: (id, patch) => delay(changeTask(id, patch)),
+
+    async deleteTask(id) {
+      const s = load()
+      save({ ...s, tasks: s.tasks.filter((t) => t.id !== id) })
+      return delay(undefined)
+    },
+
+    completeTask: (id, day, xpEarned) => delay(changeTask(id, { completedOn: day, completedAt: new Date().toISOString(), xpEarned })),
+
+    reopenTask: (id) => delay(changeTask(id, { completedOn: null, completedAt: null, xpEarned: 0 })),
   }
 }

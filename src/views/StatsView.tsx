@@ -4,11 +4,12 @@ import { DayOverview } from '../components/DayOverview'
 import type { Progress } from '../game/progress'
 import { completionRate, dailyTotals } from '../game/stats'
 import { addDays, formatDay, weekday } from '../lib/dates'
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 
 interface Props {
   habits: Habit[]
   completions: Completion[]
+  tasks: Task[]
   progress: Progress
   today: string
 }
@@ -17,8 +18,8 @@ interface Props {
 // Step 0 follows the theme's raised surface so empty days stay visible on the card.
 const HEAT = ['var(--color-surface-2)', '#6b1a1a', '#b3261e', '#f0601a', '#ffb347']
 
-export function StatsView({ habits, completions, progress, today }: Props) {
-  const daily = useMemo(() => dailyTotals(completions, 30, today), [completions, today])
+export function StatsView({ habits, completions, tasks, progress, today }: Props) {
+  const daily = useMemo(() => dailyTotals(completions, 30, today, tasks), [completions, today, tasks])
   const active = habits.filter((h) => !h.archivedAt)
   const xp30 = daily.reduce((s, d) => s + d.xp, 0)
 
@@ -54,7 +55,7 @@ export function StatsView({ habits, completions, progress, today }: Props) {
       </Card>
 
       <Card title="Activity" subtitle="Last 16 weeks — brighter = more habits done. Tap a day for its overview.">
-        <Heatmap habits={habits} completions={completions} today={today} habitCount={Math.max(active.length, 1)} />
+        <Heatmap habits={habits} completions={completions} tasks={tasks} today={today} habitCount={Math.max(active.length, 1)} />
       </Card>
 
       <Card title="Habits" subtitle="Streaks and 30-day completion rate">
@@ -130,11 +131,13 @@ function XpTooltip({ active, payload }: TooltipProps) {
 interface HeatmapProps {
   habits: Habit[]
   completions: Completion[]
+  /** for the day overview a tapped day opens */
+  tasks: Task[]
   today: string
   habitCount: number
 }
 
-function Heatmap({ habits, completions, today, habitCount }: HeatmapProps) {
+function Heatmap({ habits, completions, tasks, today, habitCount }: HeatmapProps) {
   const WEEKS = 16
   const [hover, setHover] = useState<{ day: string; count: number } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
@@ -192,7 +195,7 @@ function Heatmap({ habits, completions, today, habitCount }: HeatmapProps) {
           More
         </span>
       </div>
-      <DayOverview day={selected} today={today} habits={habits} completions={completions} onClose={() => setSelected(null)} />
+      <DayOverview day={selected} today={today} habits={habits} completions={completions} tasks={tasks} onClose={() => setSelected(null)} />
     </div>
   )
 }

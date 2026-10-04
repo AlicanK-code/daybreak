@@ -1,6 +1,7 @@
 import { dayDiff, lastNDays, toDayKey } from '../lib/dates'
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 import { isDueOn, isScheduledOn } from './schedule'
+import { tasksDoneOn } from './tasks'
 
 export interface DayTotal {
   day: string
@@ -8,8 +9,11 @@ export interface DayTotal {
   count: number
 }
 
-/** XP and completion count per day for the last `n` days, oldest first. */
-export function dailyTotals(completions: Completion[], n: number, today: string): DayTotal[] {
+/**
+ * XP and habit completion count per day for the last `n` days, oldest first. Finished one-off tasks
+ * add their XP, but not to the count (which measures habits).
+ */
+export function dailyTotals(completions: Completion[], n: number, today: string, tasks: Task[] = []): DayTotal[] {
   const map = new Map<string, DayTotal>(lastNDays(n, today).map((d) => [d, { day: d, xp: 0, count: 0 }]))
   for (const c of completions) {
     const row = map.get(c.completedOn)
@@ -17,6 +21,10 @@ export function dailyTotals(completions: Completion[], n: number, today: string)
       row.xp += c.xpEarned
       row.count++
     }
+  }
+  for (const t of tasks) {
+    const row = t.completedOn ? map.get(t.completedOn) : undefined
+    if (row) row.xp += t.xpEarned
   }
   return [...map.values()]
 }
@@ -41,6 +49,9 @@ export interface DayOverview {
   done: { habit: Habit; completion: Completion; extra: boolean }[]
   /** habits that were due that day but weren't completed (for today: not completed yet) */
   missed: Habit[]
+  /** one-off tasks ticked off that day; they add XP but don't count towards done/total */
+  tasks: Task[]
+  /** XP from habits and tasks */
   xp: number
   /** habits that count for the day: done + missed */
   total: number
@@ -53,7 +64,7 @@ export interface DayOverview {
  * on days it was due: it existed, wasn't turned off, and its schedule included that weekday. A
  * completion always counts, so history stays intact even if a habit's dates look off.
  */
-export function dayOverview(habits: Habit[], completions: Completion[], day: string): DayOverview {
+export function dayOverview(habits: Habit[], completions: Completion[], day: string, tasks: Task[] = []): DayOverview {
   const doneOn = new Map(completions.filter((c) => c.completedOn === day).map((c) => [c.habitId, c]))
   const done: DayOverview['done'] = []
   const missed: Habit[] = []
@@ -67,11 +78,13 @@ export function dayOverview(habits: Habit[], completions: Completion[], day: str
   }
   done.sort((a, b) => a.completion.completedAt.localeCompare(b.completion.completedAt))
   const total = done.length + missed.length
+  const tasksDone = tasksDoneOn(tasks, day)
   return {
     day,
     done,
     missed,
-    xp: done.reduce((s, d) => s + d.completion.xpEarned, 0),
+    tasks: tasksDone,
+    xp: done.reduce((s, d) => s + d.completion.xpEarned, 0) + tasksDone.reduce((s, t) => s + t.xpEarned, 0),
     total,
     perfect: missed.length === 0 && done.some((d) => !d.extra),
   }

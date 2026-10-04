@@ -6,7 +6,7 @@ import { Logo } from '../components/Logo'
 import { Modal } from '../components/Modal'
 import { PlayerCard } from '../components/PlayerCard'
 import { UsernameForm } from '../components/UsernameForm'
-import { useCompletions, useHabits } from '../data/queries'
+import { useCompletions, useHabits, useTasks } from '../data/queries'
 import { useSession } from '../data/RepoContext'
 import { BADGES, unlockedBadgeIds } from '../game/badges'
 import { computeProgress } from '../game/progress'
@@ -33,6 +33,7 @@ export function Shell() {
   const today = useToday()
   const habitsQ = useHabits()
   const completionsQ = useCompletions()
+  const tasksQ = useTasks()
   const [tab, setTab] = useState<Tab>('today')
   const [muted, setMutedState] = useState(isMuted)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -41,8 +42,9 @@ export function Shell() {
 
   const habits = useMemo(() => habitsQ.data ?? [], [habitsQ.data])
   const completions = useMemo(() => completionsQ.data ?? [], [completionsQ.data])
-  const ready = habitsQ.isSuccess && completionsQ.isSuccess
-  const progress = useMemo(() => computeProgress(habits, completions, today), [habits, completions, today])
+  const tasks = useMemo(() => tasksQ.data ?? [], [tasksQ.data])
+  const ready = habitsQ.isSuccess && completionsQ.isSuccess && tasksQ.isSuccess
+  const progress = useMemo(() => computeProgress(habits, completions, today, tasks), [habits, completions, today, tasks])
 
   const pushToast = useCallback((t: Omit<Toast, 'id'>) => setToasts((ts) => [...ts, { ...t, id: crypto.randomUUID() }]), [])
   const dismissToast = useCallback((id: string) => setToasts((ts) => ts.filter((t) => t.id !== id)), [])
@@ -154,10 +156,10 @@ export function Shell() {
             ))}
           </div>
         ) : tab === 'today' ? (
-          <TodayView habits={habits} completions={completions} progress={progress} today={today} onError={(m) => pushToast({ icon: '⚠️', title: m, body: 'Your change was rolled back.', tone: 'error' })} />
+          <TodayView habits={habits} completions={completions} tasks={tasks} progress={progress} today={today} onError={(m) => pushToast({ icon: '⚠️', title: m, body: 'Your change was rolled back.', tone: 'error' })} />
         ) : tab === 'stats' ? (
           <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-surface" />}>
-            <StatsView habits={habits} completions={completions} progress={progress} today={today} />
+            <StatsView habits={habits} completions={completions} tasks={tasks} progress={progress} today={today} />
           </Suspense>
         ) : (
           <BadgesView progress={progress} />

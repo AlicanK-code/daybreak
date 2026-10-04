@@ -30,12 +30,12 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
   - `demo.ts`: a localStorage implementation with seeded history, for visitors without an account.
   - `queries.ts`: TanStack Query hooks. Completing and undoing a habit are optimistic and roll back on error.
 - `src/views/`: Shell (tabs and celebration detection), TodayView, StatsView, BadgesView, AuthScreen.
-- `src/components/`: HabitCard, PlayerCard, HabitForm, Modal, Celebrations (toasts and the level-up modal).
+- `src/components/`: HabitCard, PlayerCard, HabitForm, TaskForm (sharing FormParts), Tasks (task rows and lists), DayOverview, Modal, Celebrations (toasts and the level-up modal).
 - `src/lib/`: dates, sound (Web Audio, no audio files), confetti, types.
 - `supabase/migrations/`: the SQL schema and RLS policies. Add a **new** migration file for schema changes and never edit an old one.
 
 ## Key design rules
-- **Completions are the single source of truth.** XP totals, levels, streaks and badges are derived by `computeProgress()` and never stored as counters.
+- **Completions are the single source of truth.** XP totals, levels, streaks and badges are derived by `computeProgress()` and never stored as counters. Finished one-off tasks (the `tasks` table, with `completed_on` and `xp_earned` set) also count, for XP only.
 - **`xp_earned` is stored per completion** because it depends on the streak at the moment of completion.
 - **Day keys are local calendar dates** (`YYYY-MM-DD`). Use the helpers in `src/lib/dates.ts` for all date maths; they work at noon UTC to be DST-safe.
 - Any new feature that touches data must work in **both** Repo implementations.
@@ -49,6 +49,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - Level curve: total XP needed for level n is `60 × (n − 1)^1.8`.
 - A streak stays alive until the end of today and breaks after a full missed day.
 - Schedules (`src/game/schedule.ts`): a habit is due on the weekdays of its schedule, every day by default. `habit.schedule` is a history of periods, so a change applies from its day on and past days keep the old schedule. Per-habit streaks and the streak bonus count due days only; doing a habit on an off day ("extra") earns XP but doesn't change its streak. The day streak skips days with nothing due. Perfect days, missed habits and completion rates only count due habits.
+- One-off tasks (`src/game/tasks.ts`): done once, with an optional due date. A task earns its difficulty's base XP (no streak bonus). Task XP counts towards the level, XP today and the XP chart, but tasks never affect streaks, perfect days, completion rates, habit counts or badges. Overdue tasks have no penalty.
 
 ## Conventions
 - Functional components and hooks, with named exports (except `App`).
@@ -64,7 +65,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 
 ## Roadmap
 1. ~~Custom schedules per habit (e.g. Mon/Wed/Fri)~~ (done); "X times a week" schedules still to do
-2. One-off tasks alongside daily habits
+2. ~~One-off tasks alongside daily habits~~ (done)
 3. Daily bonus quests ("complete 3 hard habits before noon")
 4. Coins and a personal reward shop
 5. ~~PWA (installable)~~ (done); reminder notifications still to do

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Completion, Habit, HabitPatch, NewCompletion, NewHabit } from '../lib/types'
+import type { Completion, Habit, HabitPatch, NewCompletion, NewHabit, Task } from '../lib/types'
 import type { Repo } from './repo'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -42,6 +42,30 @@ const toHabit = (r: HabitRow): Habit => ({
   createdAt: r.created_at,
 })
 
+interface TaskRow {
+  id: string
+  title: string
+  icon: string
+  difficulty: Task['difficulty']
+  due_on: string | null
+  completed_on: string | null
+  completed_at: string | null
+  xp_earned: number
+  created_at: string
+}
+
+const toTask = (r: TaskRow): Task => ({
+  id: r.id,
+  title: r.title,
+  icon: r.icon,
+  difficulty: r.difficulty,
+  dueOn: r.due_on,
+  completedOn: r.completed_on,
+  completedAt: r.completed_at,
+  xpEarned: r.xp_earned,
+  createdAt: r.created_at,
+})
+
 const toCompletion = (r: CompletionRow): Completion => ({
   id: r.id,
   habitId: r.habit_id,
@@ -64,6 +88,7 @@ function patchToRow(p: HabitPatch): Partial<HabitRow> {
 
 const HABIT_COLS = 'id,title,icon,difficulty,sort_order,priority,schedule,archived_at,created_at'
 const COMPLETION_COLS = 'id,habit_id,completed_on,xp_earned,completed_at'
+const TASK_COLS = 'id,title,icon,difficulty,due_on,completed_on,completed_at,xp_earned,created_at'
 const PAGE = 1000 // PostgREST's default max rows per request
 
 export function createSupabaseRepo(client: SupabaseClient): Repo {
@@ -138,6 +163,60 @@ export function createSupabaseRepo(client: SupabaseClient): Repo {
     async removeCompletion(habitId, day) {
       const { error } = await client.from('completions').delete().eq('habit_id', habitId).eq('completed_on', day)
       if (error) throw error
+    },
+
+    async listTasks() {
+      const { data, error } = await client.from('tasks').select(TASK_COLS).order('created_at')
+      if (error) throw error
+      return (data as TaskRow[]).map(toTask)
+    },
+
+    async createTask(input) {
+      const { data, error } = await client
+        .from('tasks')
+        .insert({ title: input.title, icon: input.icon, difficulty: input.difficulty, due_on: input.dueOn })
+        .select(TASK_COLS)
+        .single()
+      if (error) throw error
+      return toTask(data as TaskRow)
+    },
+
+    async updateTask(id, patch) {
+      const row: Partial<TaskRow> = {}
+      if (patch.title !== undefined) row.title = patch.title
+      if (patch.icon !== undefined) row.icon = patch.icon
+      if (patch.difficulty !== undefined) row.difficulty = patch.difficulty
+      if (patch.dueOn !== undefined) row.due_on = patch.dueOn
+      const { data, error } = await client.from('tasks').update(row).eq('id', id).select(TASK_COLS).single()
+      if (error) throw error
+      return toTask(data as TaskRow)
+    },
+
+    async deleteTask(id) {
+      const { error } = await client.from('tasks').delete().eq('id', id)
+      if (error) throw error
+    },
+
+    async completeTask(id, day, xpEarned) {
+      const { data, error } = await client
+        .from('tasks')
+        .update({ completed_on: day, completed_at: new Date().toISOString(), xp_earned: xpEarned })
+        .eq('id', id)
+        .select(TASK_COLS)
+        .single()
+      if (error) throw error
+      return toTask(data as TaskRow)
+    },
+
+    async reopenTask(id) {
+      const { data, error } = await client
+        .from('tasks')
+        .update({ completed_on: null, completed_at: null, xp_earned: 0 })
+        .eq('id', id)
+        .select(TASK_COLS)
+        .single()
+      if (error) throw error
+      return toTask(data as TaskRow)
     },
   }
 }

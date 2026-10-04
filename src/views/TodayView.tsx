@@ -5,7 +5,18 @@ import { DayOverview } from '../components/DayOverview'
 import { HabitCard } from '../components/HabitCard'
 import { HabitForm } from '../components/HabitForm'
 import { Modal } from '../components/Modal'
-import { useCreateHabit, useDeleteHabit, useReorderHabits, useToggleCompletion, useUpdateHabit } from '../data/queries'
+import { TaskForm } from '../components/TaskForm'
+import { TodayTasks, UpcomingTasks } from '../components/Tasks'
+import {
+  useCreateHabit,
+  useCreateTask,
+  useDeleteHabit,
+  useDeleteTask,
+  useReorderHabits,
+  useToggleCompletion,
+  useUpdateHabit,
+  useUpdateTask,
+} from '../data/queries'
 import type { HabitProgress, Progress } from '../game/progress'
 import { scheduleLabel, scheduleOn } from '../game/schedule'
 import { dayOverview } from '../game/stats'
@@ -13,11 +24,12 @@ import { xpForCompletion } from '../game/xp'
 import { addDays, formatDay } from '../lib/dates'
 import { mergeOrder, moveItem, orderHabits } from '../lib/order'
 import { playComplete, playUndo } from '../lib/sound'
-import type { Completion, Habit } from '../lib/types'
+import type { Completion, Habit, Task } from '../lib/types'
 
 interface Props {
   habits: Habit[]
   completions: Completion[]
+  tasks: Task[]
   progress: Progress
   today: string
   onError: (message: string) => void
@@ -28,16 +40,24 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
 
-export function TodayView({ habits, completions, progress, today, onError }: Props) {
+/** What the form dialog is showing: a new habit or task, or one being edited. */
+type Editing = { kind: 'new' } | { kind: 'habit'; habit: Habit } | { kind: 'task'; task: Task } | null
+
+export function TodayView({ habits, completions, tasks, progress, today, onError }: Props) {
   // Yesterday's unticked habits, offered as a shortcut to fill them in.
   const yesterday = addDays(today, -1)
   const yesterdayMissed = useMemo(() => dayOverview(habits, completions, yesterday).missed.length, [habits, completions, yesterday])
   const [reviewDay, setReviewDay] = useState<string | null>(null)
-  const [editing, setEditing] = useState<Habit | 'new' | null>(null)
+  const [editing, setEditing] = useState<Editing>(null)
+  // Which kind a new item is; remembered between openings so adding several tasks is quick.
+  const [newKind, setNewKind] = useState<'habit' | 'task'>('habit')
   const toggle = useToggleCompletion()
   const create = useCreateHabit()
   const update = useUpdateHabit()
   const remove = useDeleteHabit()
+  const createTask = useCreateTask()
+  const updateTask = useUpdateTask()
+  const removeTask = useDeleteTask()
   const reorder = useReorderHabits()
   // While a habit is being dragged, the list follows this local order; it's saved on drop.
   const [dragOrder, setDragOrder] = useState<string[] | null>(null)
@@ -105,7 +125,7 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
           <span className="shrink-0 font-semibold text-primary-soft">Fill in</span>
         </button>
       )}
-      <DayOverview day={reviewDay} today={today} habits={habits} completions={completions} onClose={() => setReviewDay(null)} />
+      <DayOverview day={reviewDay} today={today} habits={habits} completions={completions} tasks={tasks} onClose={() => setReviewDay(null)} />
 
       {active.length > 0 && (
         <Reorder.Group axis="y" values={ids} onReorder={setDragOrder} className="space-y-2.5">
@@ -116,7 +136,7 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
                 habit={h}
                 hp={progress.habits.get(h.id)!}
                 today={today}
-                onEdit={() => setEditing(h)}
+                onEdit={() => setEditing({ kind: 'habit', habit: h })}
                 onMove={(dir) => {
                   // Move within its own group (unfinished or finished), keeping the other group as is.
                   const finished = doneToday.has(h.id)
@@ -141,13 +161,17 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
         </Reorder.Group>
       )}
 
+      <TodayTasks tasks={tasks} today={today} onEdit={(task) => setEditing({ kind: 'task', task })} onError={onError} />
+
       <motion.button
         whileTap={{ scale: 0.97 }}
-        onClick={() => setEditing('new')}
+        onClick={() => setEditing({ kind: 'new' })}
         className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line py-4 font-semibold text-muted transition hover:border-primary hover:text-primary-soft"
       >
-        <Plus size={20} /> New habit
+        <Plus size={20} /> New habit or task
       </motion.button>
+
+      <UpcomingTasks tasks={tasks} today={today} onEdit={(task) => setEditing({ kind: 'task', task })} onError={onError} />
 
       <NotToday
         habits={notToday}
@@ -164,28 +188,82 @@ export function TodayView({ habits, completions, progress, today, onError }: Pro
         onTurnOn={(h) => update.mutate({ id: h.id, patch: { archivedAt: null } }, { onError: fail("Couldn't turn that habit back on") })}
       />
 
-      <Modal open={editing !== null} onClose={closeForm} title={editing === 'new' ? 'New habit' : 'Edit habit'}>
-        {editing === 'new' && (
-          <HabitForm
-            today={today}
-            busy={create.isPending}
-            onSubmit={(h) => create.mutate(h, { onSuccess: closeForm, onError: fail("Couldn't create habit") })}
-          />
+      <Modal open={editing !== null} onClose={closeForm} title={formTitle(editing, newKind)}>
+        {editing?.kind === 'new' && (
+          <>
+            <KindSwitch value={newKind} onChange={setNewKind} />
+            {newKind === 'habit' ? (
+              <HabitForm
+                today={today}
+                busy={create.isPending}
+                onSubmit={(h) => create.mutate(h, { onSuccess: closeForm, onError: fail("Couldn't create habit") })}
+              />
+            ) : (
+              <TaskForm
+                today={today}
+                busy={createTask.isPending}
+                onSubmit={(t) => createTask.mutate(t, { onSuccess: closeForm, onError: fail("Couldn't create task") })}
+              />
+            )}
+          </>
         )}
-        {editing && editing !== 'new' && (
+        {editing?.kind === 'habit' && (
           <HabitForm
-            key={editing.id}
-            initial={editing}
+            key={editing.habit.id}
+            initial={editing.habit}
             today={today}
             busy={update.isPending}
-            onSubmit={(patch) => update.mutate({ id: editing.id, patch }, { onSuccess: closeForm, onError: fail("Couldn't save habit") })}
+            onSubmit={(patch) => update.mutate({ id: editing.habit.id, patch }, { onSuccess: closeForm, onError: fail("Couldn't save habit") })}
             onTurnOff={() =>
-              update.mutate({ id: editing.id, patch: { archivedAt: new Date().toISOString() } }, { onSuccess: closeForm, onError: fail("Couldn't turn that habit off") })
+              update.mutate(
+                { id: editing.habit.id, patch: { archivedAt: new Date().toISOString() } },
+                { onSuccess: closeForm, onError: fail("Couldn't turn that habit off") },
+              )
             }
-            onDelete={() => remove.mutate(editing.id, { onSuccess: closeForm, onError: fail("Couldn't delete habit") })}
+            onDelete={() => remove.mutate(editing.habit.id, { onSuccess: closeForm, onError: fail("Couldn't delete habit") })}
+          />
+        )}
+        {editing?.kind === 'task' && (
+          <TaskForm
+            key={editing.task.id}
+            initial={editing.task}
+            today={today}
+            busy={updateTask.isPending}
+            onSubmit={(patch) => updateTask.mutate({ id: editing.task.id, patch }, { onSuccess: closeForm, onError: fail("Couldn't save task") })}
+            onDelete={() => removeTask.mutate(editing.task.id, { onSuccess: closeForm, onError: fail("Couldn't delete task") })}
           />
         )}
       </Modal>
+    </div>
+  )
+}
+
+function formTitle(editing: Editing, newKind: 'habit' | 'task'): string {
+  if (editing?.kind === 'habit') return 'Edit habit'
+  if (editing?.kind === 'task') return 'Edit task'
+  return newKind === 'habit' ? 'New habit' : 'New task'
+}
+
+/** Habit or one-off task, at the top of the "new" form. */
+function KindSwitch({ value, onChange }: { value: 'habit' | 'task'; onChange: (k: 'habit' | 'task') => void }) {
+  const options = [
+    { id: 'habit', label: 'Habit', hint: 'Repeats' },
+    { id: 'task', label: 'Task', hint: 'Just once' },
+  ] as const
+  return (
+    <div role="radiogroup" aria-label="Kind" className="mb-3.5 grid grid-cols-2 gap-1 rounded-xl border border-line bg-bg p-1 roomy:mb-5">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={value === o.id}
+          onClick={() => onChange(o.id)}
+          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${value === o.id ? 'bg-surface-2 text-ink shadow' : 'text-muted hover:text-ink'}`}
+        >
+          {o.label} <span className="font-normal text-faint">· {o.hint}</span>
+        </button>
+      ))}
     </div>
   )
 }

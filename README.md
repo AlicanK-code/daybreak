@@ -44,6 +44,7 @@
 - **Priority** labels: priority habits are listed first, and finished habits move to the bottom
 - **Drag to reorder** (or use the arrow keys)
 - **Turn habits off** without losing their history, and back on again later
+- **One-off tasks** alongside habits ("Book the dentist"), with an optional due date. They earn XP when ticked off, but never touch streaks.
 - **Fill in the last 7 days:** forgot to tick something yesterday? Fill it in for the XP it would have earned, and keep your streak.
 
 **Game**
@@ -153,7 +154,7 @@ Open http://localhost:5173 and click **Try the demo**.
 
 - [x] Custom schedules (e.g. gym on Mon, Wed, Fri)
 - [ ] "3 times a week" schedules
-- [ ] One-off tasks alongside daily habits
+- [x] One-off tasks alongside daily habits
 - [ ] Daily bonus quests ("complete 3 hard habits before noon")
 - [ ] Coins and a personal reward shop
 - [x] Installable app (PWA)

@@ -36,3 +36,23 @@ export interface Completion {
 export type NewHabit = Pick<Habit, 'title' | 'icon' | 'difficulty' | 'priority' | 'schedule'>
 export type HabitPatch = Partial<Pick<Habit, 'title' | 'icon' | 'difficulty' | 'priority' | 'schedule' | 'sortOrder' | 'archivedAt'>>
 export type NewCompletion = Omit<Completion, 'id' | 'completedAt'>
+
+/** A one-off task: done once, optionally by a due date. No schedule or streak. */
+export interface Task {
+  id: string
+  title: string
+  icon: string
+  difficulty: Difficulty
+  /** Local calendar day it's due (YYYY-MM-DD), or null for "someday" */
+  dueOn: string | null
+  /** Local calendar day it was ticked off, or null while it's still open */
+  completedOn: string | null
+  /** ISO timestamp it was ticked off, or null while it's still open */
+  completedAt: string | null
+  /** XP it earned when ticked off; 0 while open */
+  xpEarned: number
+  createdAt: string
+}
+
+export type NewTask = Pick<Task, 'title' | 'icon' | 'difficulty' | 'dueOn'>
+export type TaskPatch = Partial<NewTask>
