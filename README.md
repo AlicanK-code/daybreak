@@ -18,8 +18,8 @@
 </p>
 
 <p>
-  <img src="docs/today.png" alt="Today view: habits with streaks, priority labels and a Mon, Wed, Fri schedule" width="520" />
-  <img src="docs/schedule.png" alt="New habit form on a phone, with the Repeat on day picker" width="200" />
+  <img src="docs/today.png" alt="Today view: habits with streaks, priority labels and a Mon, Wed, Fri schedule, plus one-off tasks" width="520" />
+  <img src="docs/schedule.png" alt="New habit form on a phone, with the Habit / Task switch and the Repeat on day picker" width="200" />
 </p>
 
 <p>
