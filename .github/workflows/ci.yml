@@ -26,7 +26,7 @@ jobs:
       # End-to-end smoke tests: the built app in demo mode, in the runner's Chrome, under the real
       # security headers.
       - run: npx playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-results
