@@ -9,12 +9,12 @@
 
 *Formerly QuestLog.*
 
-**A gamified daily habit tracker with a fiery look.** Complete habits to earn XP, level up, keep streaks alive and unlock trophies, with confetti, sound effects and a level-up fanfare to make each tick feel rewarding.
+**A gamified daily habit tracker with a fiery look.** Complete habits to earn XP, level up, keep streaks alive and unlock trophies, with bursts of embers, sound effects and a level-up fanfare to make each tick feel rewarding.
 
 **Try it:** [daybreak-pearl.vercel.app](https://daybreak-pearl.vercel.app). Click **Try the demo** to play without an account.
 
 <p align="center">
-  <img src="docs/levelup.gif" alt="Ticking off a habit on a phone: confetti, the XP bar fills, and the level-up dialog appears with a trophy" width="280" />
+  <img src="docs/levelup.gif" alt="Ticking off a habit on a phone: embers burst out, the XP bar fills, and the level-up dialog appears with a trophy" width="280" />
 </p>
 
 <p>
@@ -51,7 +51,7 @@
 - **XP and levels.** Harder habits give more XP, and a streak adds +5% per day, up to +50%. Level titles go from *Novice* to *Mythic*, and the flame-shaped level badge grows and burns fiercer as you climb.
 - **Streaks** per habit and overall, with current and best values
 - **14 trophies** in bronze, silver and gold tiers, with progress bars for locked ones
-- **Celebrations:** confetti, floating "+XP" text, synthesized sound effects, a level-up dialog and a perfect-day celebration
+- **Celebrations:** embers bursting from the button, a rising ember storm for big moments, floating "+XP" text, synthesized sound effects, a level-up dialog and a perfect-day celebration
 
 **Insights**
 - **Daily overview:** tap any day to see what was done, what was missed and the XP earned
@@ -90,7 +90,7 @@ src/
 │   └── queries.ts # TanStack Query hooks, optimistic complete/undo/reorder
 ├── views/         # Today, Stats, Trophies, Auth, Shell
 ├── components/    # HabitCard, PlayerCard, HabitForm, DayOverview, Modal, celebrations, fire effects
-└── lib/           # dates, ordering, sound (Web Audio), confetti, types
+└── lib/           # dates, ordering, sound (Web Audio), ember effects, types
 supabase/migrations/  # SQL schema + RLS policies
 ```
 

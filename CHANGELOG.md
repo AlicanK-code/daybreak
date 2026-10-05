@@ -11,6 +11,17 @@ version; each release is tagged in git (e.g. `v0.7.0`).
 
 ## [Unreleased]
 
+### UI & design
+
+- **Embers instead of confetti.** Ticking off a habit or task strikes a burst of glowing sparks
+  from the button that cool from white-hot to red as they float upwards. Level-ups and perfect
+  days send an ember storm rising from the bottom of the screen, as if the fire flares up, with a
+  few pixel embers to match the background. Still skipped for reduced motion.
+- **Notifications burn away like a scroll.** When a notification closes, by itself or with the ×,
+  a ragged orange-red edge burns up through it from the bottom, scorching the paper ahead and
+  throwing off sparks, until nothing is left. Notifications now last 4 seconds in all, the last
+  1.8 of them burning; with reduced motion they simply disappear at 4 seconds.
+
 ## [0.17.0] - 2026-10-04
 
 ### Features

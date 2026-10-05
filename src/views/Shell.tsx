@@ -12,7 +12,7 @@ import { BADGES, unlockedBadgeIds } from '../game/badges'
 import { computeProgress } from '../game/progress'
 import { titleForLevel } from '../game/xp'
 import { useToday } from '../hooks/useToday'
-import { bigCelebration } from '../lib/confetti'
+import { emberStorm } from '../lib/celebrate'
 import { isMuted, playBadge, playLevelUp, setMuted } from '../lib/sound'
 import { BadgesView } from './BadgesView'
 import { TodayView } from './TodayView'
@@ -67,7 +67,7 @@ export function Shell() {
       s.maxLevel = progress.level.level
       setLevelUp(progress.level.level)
       playLevelUp()
-      bigCelebration()
+      emberStorm()
       delay = 700
     }
     const fresh = BADGES.filter((b) => unlocked.has(b.id) && !s.badges.has(b.id))
@@ -79,7 +79,7 @@ export function Shell() {
       }, delay)
     }
     if (perfect && !s.perfect) {
-      if (!delay) bigCelebration()
+      if (!delay) emberStorm()
       pushToast({ icon: '🎉', title: 'All quests complete!', body: 'Every habit done today. Legendary.', tone: 'perfect' })
     }
     s.perfect = perfect

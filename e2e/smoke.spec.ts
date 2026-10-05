@@ -170,6 +170,60 @@ test('celebrates a level-up', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'You reached level 10' })).toBeVisible()
   await page.getByRole('button', { name: 'Onward!' }).click()
   await expect(page.getByRole('heading', { name: 'You reached level 10' })).toBeHidden()
+
+  // The trophy notification closes straight away with reduced motion (no burn).
+  await expect(page.getByText('Reach level 10')).toBeVisible()
+  await page.getByRole('button', { name: 'Dismiss' }).click()
+  await expect(page.getByText('Reach level 10')).toBeHidden()
+})
+
+test.describe('with animations on', () => {
+  // The other tests run with reduced motion, which skips the ember effects; these draw them for real.
+  test.use({ reducedMotion: 'no-preference' })
+
+  test('bursts embers from a ticked habit, and sends an ember storm up on a level-up', async ({ page }) => {
+    await openDemo(page)
+    const embers = page.locator('canvas[data-celebration]')
+    // Count lit pixels on the ember canvas, to tell it's actually drawing.
+    const lit = () =>
+      embers.evaluate((c: HTMLCanvasElement) => {
+        const data = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data
+        let n = 0
+        for (let i = 3; i < data.length; i += 4) if (data[i] > 0) n++
+        return n
+      })
+
+    await page.getByRole('button', { name: /^Complete Drink 2L of water/ }).click()
+    await expect(embers).toBeAttached()
+    await expect.poll(lit).toBeGreaterThan(0)
+    // The burst burns out and the canvas clears.
+    await expect.poll(lit, { timeout: 5000 }).toBe(0)
+
+    await editDemoData(page, (state) => {
+      const total = [...state.completions, ...state.tasks].reduce((s, c) => s + c.xpEarned, 0)
+      state.completions[0].xpEarned += Math.round(60 * Math.pow(9, 1.8)) - total - 5
+    })
+    await page.getByRole('button', { name: /^Complete Read 20 pages/ }).click()
+    await expect(page.getByRole('heading', { name: 'You reached level 10' })).toBeVisible()
+    await expect.poll(lit).toBeGreaterThan(0)
+  })
+
+  test('burns a dismissed notification away like a scroll, then removes it', async ({ page }) => {
+    await openDemo(page)
+    await editDemoData(page, (state) => {
+      const total = [...state.completions, ...state.tasks].reduce((s, c) => s + c.xpEarned, 0)
+      state.completions[0].xpEarned += Math.round(60 * Math.pow(9, 1.8)) - total - 5
+    })
+    await page.getByRole('button', { name: /^Complete Read 20 pages/ }).click()
+    await page.getByRole('button', { name: 'Onward!' }).click()
+
+    const note = page.locator('[aria-live] > div').filter({ hasText: 'Reach level 10' })
+    await expect(note).toBeVisible()
+    await note.getByRole('button', { name: 'Dismiss' }).click()
+    // While it burns, the notification is masked away bit by bit, under the real security headers.
+    await expect.poll(() => note.evaluate((el) => getComputedStyle(el).maskImage)).toContain('data:image/png')
+    await expect(note).toHaveCount(0, { timeout: 4000 })
+  })
 })
 
 test('fills in a habit missed yesterday', async ({ page }) => {

@@ -1,6 +1,9 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { BURN_CELL, BURN_MS, NOTIFICATION_MS, burnFront, burnOrder, burnState, edgeColor, scorchColor } from '../lib/burn'
+import { emberSparks } from '../lib/celebrate'
+import { spark } from '../lib/embers'
 import { levelFlame } from '../lib/levelFlame'
 import { LevelBadge } from './LevelFlame'
 
@@ -22,46 +25,153 @@ const toneClass: Record<Toast['tone'], string> = {
 }
 
 export function Toasts({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: string) => void }) {
+  const reduced = useReducedMotion()
+  // Notifications burning away right now; each is removed once its burn finishes.
+  const [burning, setBurning] = useState<ReadonlySet<string>>(new Set())
+  const burnAway = useCallback(
+    (id: string) => (reduced ? dismiss(id) : setBurning((b) => new Set(b).add(id))),
+    [reduced, dismiss],
+  )
+  const burnt = useCallback(
+    (id: string) => {
+      setBurning((b) => {
+        const next = new Set(b)
+        next.delete(id)
+        return next
+      })
+      dismiss(id)
+    },
+    [dismiss],
+  )
+
+  // Each notification lasts NOTIFICATION_MS in all, oldest first: it starts burning BURN_MS before
+  // the end (with reduced motion there's no burn, so it simply goes at the end).
+  const next = toasts.find((t) => !burning.has(t.id))
   useEffect(() => {
-    if (!toasts.length) return
-    const t = setTimeout(() => dismiss(toasts[0].id), 4500)
+    if (!next) return
+    const t = setTimeout(() => burnAway(next.id), reduced ? NOTIFICATION_MS : NOTIFICATION_MS - BURN_MS)
     return () => clearTimeout(t)
-  }, [toasts, dismiss])
+  }, [next, burnAway, reduced])
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2 px-4" aria-live="polite">
       <AnimatePresence>
         {toasts.slice(0, 3).map((t) => (
-          <motion.div
-            key={t.id}
-            layout
-            initial={{ opacity: 0, y: -30, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-surface-2 p-3 shadow-xl ${toneClass[t.tone]}`}
-          >
-            <motion.span
-              className="text-3xl"
-              initial={{ rotate: -30, scale: 0.5 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 10, delay: 0.1 }}
-            >
-              {t.icon}
-            </motion.span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                {t.tone === 'badge' ? 'Badge unlocked' : t.tone === 'perfect' ? 'Perfect day' : 'Something went wrong'}
-              </p>
-              <p className="font-bold">{t.title}</p>
-              <p className="text-sm text-muted">{t.body}</p>
-            </div>
-            <button onClick={() => dismiss(t.id)} className="rounded-lg p-1 text-faint hover:text-ink" aria-label="Dismiss">
-              <X size={16} />
-            </button>
-          </motion.div>
+          <BurningToast key={t.id} toast={t} burning={burning.has(t.id)} onDismiss={() => burnAway(t.id)} onBurnt={() => burnt(t.id)} />
         ))}
       </AnimatePresence>
     </div>
+  )
+}
+
+/**
+ * One notification. When it's dismissed it burns away like a scroll held over a flame: a ragged,
+ * glowing edge climbs from the bottom, scorching the paper ahead of it and throwing off sparks,
+ * until nothing is left. The burn is worked out on a small canvas and applied as a mask, so the
+ * real notification underneath is what burns.
+ */
+function BurningToast({ toast: t, burning, onDismiss, onBurnt }: { toast: Toast; burning: boolean; onDismiss: () => void; onBurnt: () => void }) {
+  const box = useRef<HTMLDivElement>(null)
+  const glow = useRef<HTMLCanvasElement>(null)
+  // The latest "burnt" callback, without restarting a burn that's under way when it changes.
+  const done = useRef(onBurnt)
+  useEffect(() => {
+    done.current = onBurnt
+  })
+
+  useEffect(() => {
+    const el = box.current
+    const overlay = glow.current
+    if (!burning || !el || !overlay) return
+    const rect = el.getBoundingClientRect()
+    const cols = Math.max(1, Math.ceil(rect.width / BURN_CELL))
+    const rows = Math.max(1, Math.ceil(rect.height / BURN_CELL))
+    const order = burnOrder(cols, rows)
+    overlay.width = cols
+    overlay.height = rows
+    const mask = document.createElement('canvas')
+    mask.width = cols
+    mask.height = rows
+    const oc = overlay.getContext('2d')
+    const mc = mask.getContext('2d')
+    if (!oc || !mc) return done.current()
+    const glowPixels = oc.createImageData(cols, rows)
+    const maskPixels = mc.createImageData(cols, rows)
+    let start = 0
+    let raf = 0
+
+    const frame = (now: number) => {
+      start ||= now
+      const progress = Math.min((now - start) / BURN_MS, 1)
+      const front = burnFront(progress)
+      const g = glowPixels.data
+      const m = maskPixels.data
+      const edge: number[] = []
+      for (let i = 0; i < order.length; i++) {
+        const k = i * 4
+        const state = burnState(order[i], front)
+        m[k + 3] = state.kind === 'gone' ? 0 : 255
+        if (state.kind === 'edge') {
+          ;[g[k], g[k + 1], g[k + 2]] = edgeColor(state.heat)
+          g[k + 3] = 255
+          edge.push(i)
+        } else if (state.kind === 'scorch') {
+          const [r, gr, b, a] = scorchColor(state.amount)
+          ;[g[k], g[k + 1], g[k + 2], g[k + 3]] = [r, gr, b, Math.round(a * 255)]
+        } else {
+          g[k + 3] = 0
+        }
+      }
+      oc.putImageData(glowPixels, 0, 0)
+      mc.putImageData(maskPixels, 0, 0)
+      const url = `url(${mask.toDataURL()})`
+      el.style.setProperty('mask-image', url)
+      el.style.setProperty('-webkit-mask-image', url)
+      // A couple of sparks flick off the burning edge each frame.
+      const sparks = []
+      for (let n = 0; n < 2 && edge.length; n++) {
+        const i = edge[Math.floor(Math.random() * edge.length)]
+        sparks.push(spark(rect.left + (i % cols) * BURN_CELL, rect.top + Math.floor(i / cols) * BURN_CELL))
+      }
+      emberSparks(sparks)
+      if (progress < 1) raf = requestAnimationFrame(frame)
+      else done.current()
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [burning])
+
+  return (
+    <motion.div
+      ref={box}
+      layout
+      initial={{ opacity: 0, y: -30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      style={{ maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }}
+      className={`pointer-events-auto relative flex w-full max-w-sm items-center gap-3 overflow-hidden rounded-2xl border bg-surface-2 p-3 shadow-xl ${toneClass[t.tone]}`}
+    >
+      <motion.span
+        className="text-3xl"
+        initial={{ rotate: -30, scale: 0.5 }}
+        animate={{ rotate: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 10, delay: 0.1 }}
+      >
+        {t.icon}
+      </motion.span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          {t.tone === 'badge' ? 'Badge unlocked' : t.tone === 'perfect' ? 'Perfect day' : 'Something went wrong'}
+        </p>
+        <p className="font-bold">{t.title}</p>
+        <p className="text-sm text-muted">{t.body}</p>
+      </div>
+      <button onClick={onDismiss} disabled={burning} className="rounded-lg p-1 text-faint hover:text-ink" aria-label="Dismiss">
+        <X size={16} />
+      </button>
+      {/* The glowing edge and scorch, drawn over the notification while it burns. */}
+      <canvas ref={glow} aria-hidden className="pointer-events-none absolute inset-0 size-full" />
+    </motion.div>
   )
 }
 

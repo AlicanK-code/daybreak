@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import type { HabitProgress } from '../game/progress'
 import { EVERY_DAY, scheduleLabel, scheduleOn } from '../game/schedule'
 import { xpForCompletion } from '../game/xp'
-import { burstFrom } from '../lib/confetti'
+import { emberBurst } from '../lib/celebrate'
 import { playComplete, playUndo } from '../lib/sound'
 import { DIFF_STYLE } from '../lib/difficulty'
 import type { Habit } from '../lib/types'
@@ -39,7 +39,7 @@ export function HabitCard({ habit, hp, today, onComplete, onUndo, onEdit, onMove
     }
     const newStreak = hp.streakBeforeToday + 1
     playComplete(newStreak)
-    burstFrom(btn.current, habit.difficulty === 'hard' ? 1.5 : habit.difficulty === 'medium' ? 1 : 0.7)
+    emberBurst(btn.current, habit.difficulty === 'hard' ? 1.5 : habit.difficulty === 'medium' ? 1 : 0.7)
     navigator.vibrate?.(20)
     const id = Date.now()
     setFloats((f) => [...f, { id, xp }])

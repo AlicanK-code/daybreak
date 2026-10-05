@@ -3,7 +3,7 @@ import { CalendarClock, Check, ChevronDown, Pencil } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useToggleTask } from '../data/queries'
 import { daysLate, taskStatus, todayTasks, upcomingTasks, xpForTask } from '../game/tasks'
-import { burstFrom } from '../lib/confetti'
+import { emberBurst } from '../lib/celebrate'
 import { addDays, formatDay } from '../lib/dates'
 import { DIFF_STYLE } from '../lib/difficulty'
 import { playComplete, playUndo } from '../lib/sound'
@@ -100,7 +100,7 @@ function TaskRow({ task, today, onEdit, onError }: { task: Task; today: string; 
       return
     }
     playComplete()
-    burstFrom(btn.current, task.difficulty === 'hard' ? 1.2 : 0.7)
+    emberBurst(btn.current, task.difficulty === 'hard' ? 1.2 : 0.7)
     navigator.vibrate?.(20)
     toggle.mutate({ type: 'complete', id: task.id, day: today, xp }, { onError: () => onError("Couldn't save that task") })
   }

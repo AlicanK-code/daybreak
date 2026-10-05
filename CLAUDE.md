@@ -31,7 +31,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
   - `queries.ts`: TanStack Query hooks. Completing and undoing a habit are optimistic and roll back on error.
 - `src/views/`: Shell (tabs and celebration detection), TodayView, StatsView, BadgesView, AuthScreen.
 - `src/components/`: HabitCard, PlayerCard, HabitForm, TaskForm (sharing FormParts), Tasks (task rows and lists), DayOverview, Modal, Celebrations (toasts and the level-up modal).
-- `src/lib/`: dates, sound (Web Audio, no audio files), confetti, types.
+- `src/lib/`: dates, sound (Web Audio, no audio files), ember celebrations (`embers.ts` is the pure particle model, `celebrate.ts` draws it), the burn-away for notifications (`burn.ts`, drawn by `BurningToast` in Celebrations), types.
 - `supabase/migrations/`: the SQL schema and RLS policies. Add a **new** migration file for schema changes and never edit an old one.
 
 ## Key design rules
@@ -41,7 +41,7 @@ Before saying a change is done, run lint, typecheck, test and build. They must a
 - Any new feature that touches data must work in **both** Repo implementations.
 - Celebrations must respect `prefers-reduced-motion` and the mute toggle.
 - Tables must have RLS enabled, with owner-only policies.
-- `vercel.json` sets a strict Content Security Policy: the app may only load from itself, Google Fonts and its Supabase project (confetti also needs `blob:` workers). Anything new from another origin (a script, font, image, API or analytics) must be added to the matching directive there, or the browser blocks it silently in production. The dev server doesn't send these headers, so test with a production build.
+- `vercel.json` sets a strict Content Security Policy: the app may only load from itself, Google Fonts and its Supabase project. Anything new from another origin (a script, font, image, API or analytics) must be added to the matching directive there, or the browser blocks it silently in production. The dev server doesn't send these headers, so test with a production build.
 
 ## Game rules (current)
 - Base XP: easy 10, medium 20, hard 35.
